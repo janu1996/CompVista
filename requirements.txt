@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-CORS
+pandas
+numpy
+Faker
+scikit-learn
+python-dotenv
+pytest
