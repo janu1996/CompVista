@@ -72,3 +72,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Review and finalize database schema.
 - Implement SQLite database using SQLAlchemy.
 - Develop synthetic HR data generator.
+
+## Entity Relationship Diagram
+
+![CompVista ER Diagram](ER_Diagram.png)
