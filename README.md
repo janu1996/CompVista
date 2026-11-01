@@ -48,3 +48,27 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Design the database schema.
 - Define master and transaction entities.
 - Start synthetic data generation.
+
+
+### Day 1 – November 1, 2026
+
+**Project Setup**
+- Created CompVista GitHub repository.
+- Connected local project with GitHub.
+- Created initial project folder structure.
+- Added requirements.txt and .gitignore.
+
+**Database Design**
+- Designed 10 core database entities.
+- Defined primary keys and foreign keys.
+- Documented entity relationships.
+- Designed AuditLog and ProposalHistory.
+- Created ER diagram.
+- Created initial data dictionary.
+
+**Status:** Project setup and initial database documentation completed.
+
+**Next Steps**
+- Review and finalize database schema.
+- Implement SQLite database using SQLAlchemy.
+- Develop synthetic HR data generator.
