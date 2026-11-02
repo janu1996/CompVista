@@ -74,6 +74,10 @@ class AdjustmentProposal(db.Model):
 
     approved_at = db.Column(db.DateTime)
 
+    rejected_by = db.Column(db.String(100))
+
+    rejected_at = db.Column(db.DateTime)
+
     applied_at = db.Column(db.DateTime)
 
     def __repr__(self):

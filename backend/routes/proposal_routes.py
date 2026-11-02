@@ -6,6 +6,7 @@ from models import AdjustmentProposal, ProposalHistory
 from services.proposal_service import generate_adjustment_proposals
 from services.approval_service import (
     get_proposal,
+    submit_proposal,
     approve_proposal,
     reject_proposal,
     apply_proposal
@@ -35,15 +36,24 @@ def serialize_proposal(proposal):
         "issue_type": proposal.issue_type,
         "status": proposal.status,
         "proposed_by": proposal.proposed_by,
+
         "approved_by": proposal.approved_by,
-        "created_at": (
-            proposal.created_at.isoformat()
-            if proposal.created_at else None
-        ),
         "approved_at": (
             proposal.approved_at.isoformat()
             if proposal.approved_at else None
         ),
+
+        "rejected_by": proposal.rejected_by,
+        "rejected_at": (
+            proposal.rejected_at.isoformat()
+            if proposal.rejected_at else None
+        ),
+
+        "created_at": (
+            proposal.created_at.isoformat()
+            if proposal.created_at else None
+        ),
+
         "applied_at": (
             proposal.applied_at.isoformat()
             if proposal.applied_at else None
@@ -53,7 +63,7 @@ def serialize_proposal(proposal):
 
 # --------------------------------------------------
 # 1. GET ALL PROPOSALS
-# GET /api/proposals
+# GET /api/proposals/
 # --------------------------------------------------
 
 @proposal_bp.route("/", methods=["GET"])
@@ -87,7 +97,10 @@ def get_all_proposals():
 # GET /api/proposals/<proposal_id>
 # --------------------------------------------------
 
-@proposal_bp.route("/<string:proposal_id>", methods=["GET"])
+@proposal_bp.route(
+    "/<string:proposal_id>",
+    methods=["GET"]
+)
 def get_proposal_details(proposal_id):
 
     try:
@@ -102,6 +115,7 @@ def get_proposal_details(proposal_id):
         history_data = []
 
         for item in history:
+
             history_data.append({
                 "previous_status": item.previous_status,
                 "new_status": item.new_status,
@@ -142,13 +156,17 @@ def get_proposal_details(proposal_id):
 # POST /api/proposals/generate
 # --------------------------------------------------
 
-@proposal_bp.route("/generate", methods=["POST"])
+@proposal_bp.route(
+    "/generate",
+    methods=["POST"]
+)
 def generate_proposals():
 
     try:
         data = request.get_json(silent=True) or {}
 
         date_value = data.get("date")
+
         proposed_by = data.get(
             "proposed_by",
             "CompVista Analysis Engine"
@@ -159,13 +177,17 @@ def generate_proposals():
         if date_value:
             try:
                 analysis_date = date.fromisoformat(date_value)
-            except ValueError:
+
+            except (ValueError, TypeError):
                 return jsonify({
                     "success": False,
                     "message": "Invalid date. Use YYYY-MM-DD."
                 }), 400
 
-        if not isinstance(proposed_by, str) or not proposed_by.strip():
+        if (
+            not isinstance(proposed_by, str)
+            or not proposed_by.strip()
+        ):
             return jsonify({
                 "success": False,
                 "message": "Proposed by name is required."
@@ -192,7 +214,52 @@ def generate_proposals():
 
 
 # --------------------------------------------------
-# 4. APPROVE PROPOSAL
+# 4. SUBMIT PROPOSAL
+# POST /api/proposals/<proposal_id>/submit
+# --------------------------------------------------
+
+@proposal_bp.route(
+    "/<string:proposal_id>/submit",
+    methods=["POST"]
+)
+def submit_proposal_api(proposal_id):
+
+    try:
+        data = request.get_json(silent=True) or {}
+
+        submitted_by = data.get("submitted_by")
+        remarks = data.get("remarks")
+
+        result = submit_proposal(
+            proposal_id,
+            submitted_by,
+            remarks
+        )
+
+        return jsonify({
+            "success": True,
+            "message": result["message"],
+            "data": result
+        }), 200
+
+    except ValueError as e:
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 400
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "message": "Proposal submission failed",
+            "error": str(e)
+        }), 500
+
+
+# --------------------------------------------------
+# 5. APPROVE PROPOSAL
 # POST /api/proposals/<proposal_id>/approve
 # --------------------------------------------------
 
@@ -237,7 +304,7 @@ def approve_proposal_api(proposal_id):
 
 
 # --------------------------------------------------
-# 5. REJECT PROPOSAL
+# 6. REJECT PROPOSAL
 # POST /api/proposals/<proposal_id>/reject
 # --------------------------------------------------
 
@@ -282,7 +349,7 @@ def reject_proposal_api(proposal_id):
 
 
 # --------------------------------------------------
-# 6. APPLY APPROVED PROPOSAL
+# 7. APPLY APPROVED PROPOSAL
 # POST /api/proposals/<proposal_id>/apply
 # --------------------------------------------------
 

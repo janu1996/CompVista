@@ -16,8 +16,9 @@ The platform helps HR teams understand compensation fairness through salary benc
 - Comparable employee group analysis
 - Compensation disparity detection
 - Evidence-based adjustment proposals
-- Proposal approval and rejection workflow
+- Proposal submission, approval and rejection workflow
 - Salary adjustment application
+- Employee location history tracking
 - Audit trail and approval history tracking
 - Data validation and reporting
 
@@ -37,7 +38,7 @@ The platform helps HR teams understand compensation fairness through salary benc
 
 🚧 Under Development
 
-Core database design, synthetic data generation, compensation band master data, analysis services, and proposal workflow implementation are in progress.
+Core database design, synthetic data generation, compensation band master data, compensation analysis services, proposal lifecycle workflow, and historical data validation have been implemented and tested. Frontend development and remaining data scenarios are pending.
 
 ## Disclaimer
 
@@ -50,6 +51,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 ### Day 1 – November 1, 2026
 
 **Project Setup**
+
 - Created CompVista GitHub repository.
 - Connected local project with GitHub.
 - Created initial project folder structure.
@@ -57,6 +59,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Created initial README.md.
 
 **Database Design**
+
 - Designed core database entities.
 - Defined primary keys and foreign keys.
 - Documented entity relationships.
@@ -69,6 +72,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 ### Day 2 – November 2, 2026
 
 **Database Implementation**
+
 - Implemented SQLAlchemy database models.
 - Configured Flask application with SQLite.
 - Implemented Employee, Role, Level and Location models.
@@ -77,6 +81,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Implemented AdjustmentProposal, AuditLog and ProposalHistory models.
 
 **Synthetic Data Generation**
+
 - Implemented synthetic HR data generation.
 - Generated 5,000 employee records.
 - Created role, level and location master data.
@@ -84,6 +89,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Used a fixed random seed for reproducibility.
 
 **Compensation Band Master Data**
+
 - Expanded role master data to 40 roles.
 - Configured 5 levels and 8 locations.
 - Generated 1,600 effective-dated compensation bands.
@@ -92,6 +98,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Removed 800 obsolete band records from the separate upgrade test database.
 
 **Band Validation**
+
 - Verified 1,600 expected role-level-location combinations.
 - Checked duplicate combinations.
 - Checked missing and unexpected combinations.
@@ -99,6 +106,7 @@ This project uses synthetic employee data for demonstration and analysis purpose
 - Validated effective dates.
 
 **Validation Results**
+
 - Expected combinations: 1,600
 - Actual unique combinations: 1,600
 - Duplicate combinations: 0
@@ -109,14 +117,82 @@ This project uses synthetic employee data for demonstration and analysis purpose
 
 **Status:** Compensation band master data migration and validation completed successfully in the upgrade test database.
 
-**Next Steps**
-- Complete synthetic dataset validation.
-- Strengthen compensation analysis and currency/FTE normalization.
-- Complete comparable group and disparity analysis.
+### Day 3 – November 3, 2026
+
+**Salary History Enhancement**
+
+- Updated salary history generation logic to support historical FTE changes.
+- Changed the target salary history period to 2024–2026.
+- Created a separate salary history migration script.
+- Removed 3,248 records from 2023 in the isolated salary migration test database.
+- Preserved salary records for 2024, 2025 and 2026.
+- Updated historical FTE values for selected synthetic employees.
+- Recalculated actual salary amounts according to the updated FTE.
+
+**Salary Migration Results**
+
+- Salary records before migration: 16,599
+- 2023 records removed: 3,248
+- Salary records after migration: 13,351
+- FTE records updated: 6
+- Invalid FTE values: 0
+- Invalid salary values: 0
+- Invalid employee foreign keys: 0
+- Invalid compensation band foreign keys: 0
+- Invalid effective dates: 0
+
+**Historical FTE Verification**
+
+- Verified historical FTE changes for 5 employees.
+- Confirmed multiple FTE values across salary history records.
+- Verified salary history for 2024, 2025 and 2026.
+
+**Currency Audit**
+
+- Audited INR and GBP salary records.
+- Verified compensation band currency distribution.
+- Verified employee location and currency mapping.
+- Identified the need for documented FX conversion and historical currency transfer scenarios.
+
+**Employee Location History**
+
+- Implemented EmployeeLocationHistory model.
+- Registered the model in the backend model package.
+- Created the employee location history table in the isolated salary migration test database.
+- Inserted initial location history records for 5,000 employees.
+- Verified foreign key integrity.
+
+**Location History Validation Results**
+
+- Initial location history records inserted: 5,000
+- Total location history records: 5,000
+- Foreign key errors: 0
+
+**Proposal Lifecycle and Approval Workflow**
+
+- Implemented proposal submission workflow.
+- Implemented approval and rejection workflows.
+- Implemented salary adjustment application.
+- Added rejection reviewer and rejection timestamp tracking.
+- Added proposal history and audit logging for lifecycle transitions.
+- Verified that duplicate salary adjustment application is prevented.
+- Tested FTE-aware salary adjustment application.
+
+**Status:** Salary history migration, historical FTE verification, location history creation, and proposal lifecycle testing completed successfully in isolated test databases.
+
+---
+
+## Next Steps
+
+- Implement documented historical currency transfer and FX conversion scenarios.
+- Complete synthetic dataset validation and ground-truth checks.
+- Strengthen compensation analysis and disparity reporting.
+- Complete comparable group and exception analysis.
 - Expand proposal evidence and approval workflow.
-- Implement remaining validation, exception and reporting requirements.
-- Develop frontend dashboard and user workflows.
-- Prepare test evidence and project documentation.
+- Implement remaining validation and reporting requirements.
+- Develop React frontend dashboard and user workflows.
+- Integrate frontend with Flask backend APIs.
+- Prepare comprehensive test evidence and project documentation.
 
 ---
 
@@ -133,6 +209,20 @@ CompVista/
 │   ├── app.py
 │   ├── extensions.py
 │   ├── models/
+│   │   ├── employee.py
+│   │   ├── role.py
+│   │   ├── level.py
+│   │   ├── location.py
+│   │   ├── compensation_band.py
+│   │   ├── salary_record.py
+│   │   ├── performance_evidence.py
+│   │   ├── tenure.py
+│   │   ├── promotion.py
+│   │   ├── adjustment_proposal.py
+│   │   ├── audit_log.py
+│   │   ├── proposal_history.py
+│   │   └── employee_location_history.py
+│   │
 │   ├── routes/
 │   └── services/
 │
@@ -151,7 +241,12 @@ CompVista/
 │   ├── test_analysis.py
 │   ├── test_proposals.py
 │   ├── test_approval.py
-│   └── test_apply.py
+│   ├── test_apply.py
+│   ├── migrate_salary_history.py
+│   ├── verify_salary_migration.py
+│   ├── audit_salary_history.py
+│   ├── audit_currency_history.py
+│   └── create_location_history_table.py
 │
 ├── tests/
 ├── ER_Diagram.png
@@ -224,13 +319,14 @@ Run general dataset validation:
 python src/verify_data.py
 ```
 
-**Note:** The band migration and validation scripts currently target the separate upgrade test database. Do not run migration against the original database without creating and verifying a backup first.
+**Note:** Salary history and location history migration scripts currently target isolated test databases. Do not run migration scripts against the original database without creating and verifying a backup first. The salary migration test database contains 13,351 salary records for 2024–2026.
 
 ## Reproducibility
 
 - Synthetic data generation uses a fixed seed: `20261022`.
 - A consistent seed supports repeatable data generation.
 - Data validation scripts check important master data and compensation band constraints.
+- Migration scripts use separate test databases and backups to protect existing data.
 
 ## Future Enhancements
 
@@ -240,4 +336,4 @@ python src/verify_data.py
 - Evidence-linked proposal reviews.
 - Role-based access control for HR, managers and administrators.
 - Comprehensive test coverage and exception reporting.
-- CSV, JSON and SQL export support.
+- Historical employee

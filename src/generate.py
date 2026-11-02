@@ -125,7 +125,7 @@ BASE_SALARIES = {
 INR_PER_GBP = Decimal("105.00")
 CENT = Decimal("0.01")
 
-HISTORY_YEARS = [2023, 2024, 2025, 2026]
+HISTORY_YEARS = [2024, 2025, 2026]
 DATA_END_DATE = date(2026, 10, 31)
 
 
@@ -363,6 +363,8 @@ def generate_compensation_bands():
 # GENERATE SALARY HISTORY
 # --------------------------------------------------
 
+
+
 def generate_salary_history():
 
     employees = Employee.query.order_by(
@@ -410,13 +412,6 @@ def generate_salary_history():
                 f"Missing band for {employee.employee_id}"
             )
 
-        fte = rng.choices(
-            [1.0, 0.75, 0.5],
-            weights=[90, 6, 4],
-        )[0]
-
-        fte_decimal = Decimal(str(fte))
-
         annual_salary = (
             Decimal(str(band.midpoint_salary))
             * Decimal(str(rng.uniform(0.82, 0.90)))
@@ -437,6 +432,8 @@ def generate_salary_history():
             if start <= DATA_END_DATE:
                 effective_dates.append((year, start))
 
+        previous_fte = None
+
         for index, (year, start_date) in enumerate(effective_dates):
 
             salary_id = f"SAL-{employee.employee_id}-{year}"
@@ -446,11 +443,27 @@ def generate_salary_history():
                 continue
 
             if index > 0:
-
                 annual_salary = (
                     annual_salary
                     * Decimal(str(rng.uniform(1.03, 1.08)))
                 ).quantize(CENT)
+
+            # Generate historical FTE.
+            fte = rng.choices(
+                [1.0, 0.75, 0.5],
+                weights=[90, 6, 4],
+            )[0]
+
+            # Ensure selected employees have historical FTE changes.
+            if index > 0 and employee.employee_id.endswith("0"):
+                fte = 0.75 if previous_fte == 1.0 else 1.0
+
+            fte_changed = (
+                previous_fte is not None
+                and fte != previous_fte
+            )
+
+            fte_decimal = Decimal(str(fte))
 
             minimum = (
                 Decimal(str(band.min_salary))
@@ -487,10 +500,16 @@ def generate_salary_history():
                     change_reason=(
                         "Initial salary record"
                         if index == 0
-                        else "Annual merit increase"
+                        else (
+                            "Annual merit increase with FTE change"
+                            if fte_changed
+                            else "Annual merit increase"
+                        )
                     ),
                 )
             )
+
+            previous_fte = fte
 
             existing_records.add(salary_id)
             generated += 1
@@ -521,7 +540,6 @@ def generate_salary_history():
     print("New records generated:", generated)
     print("Existing records skipped:", skipped)
     print("Total salary records:", SalaryRecord.query.count())
-
 
 # --------------------------------------------------
 # GENERATE PERFORMANCE EVIDENCE
