@@ -1,12 +1,34 @@
 
 from extensions import db
+from sqlalchemy import Numeric
 
 
 class SalaryRecord(db.Model):
     __tablename__ = "salary_records"
 
-    salary_id = db.Column(db.String(30), primary_key=True)
+    # Database validations
+    __table_args__ = (
+        db.CheckConstraint(
+            "fte > 0 AND fte <= 1",
+            name="check_valid_salary_fte"
+        ),
+        db.CheckConstraint(
+            "effective_to IS NULL OR effective_to > effective_from",
+            name="check_valid_salary_dates"
+        ),
+        db.CheckConstraint(
+            "base_salary > 0",
+            name="check_positive_base_salary"
+        ),
+    )
 
+    # Primary Key
+    salary_id = db.Column(
+        db.String(30),
+        primary_key=True
+    )
+
+    # Foreign Keys
     employee_id = db.Column(
         db.String(20),
         db.ForeignKey("employees.employee_id"),
@@ -19,16 +41,37 @@ class SalaryRecord(db.Model):
         nullable=False
     )
 
-    base_salary = db.Column(db.Float, nullable=False)
+    # Salary Details
+    base_salary = db.Column(
+        Numeric(14, 2),
+        nullable=False
+    )
 
-    currency_code = db.Column(db.String(5), nullable=False)
+    currency_code = db.Column(
+        db.String(5),
+        nullable=False
+    )
 
-    fte = db.Column(db.Float, nullable=False, default=1.0)
+    fte = db.Column(
+        db.Float,
+        nullable=False,
+        default=1.0
+    )
 
-    effective_from = db.Column(db.Date, nullable=False)
-    effective_to = db.Column(db.Date, nullable=True)
+    # Effective Dates
+    effective_from = db.Column(
+        db.Date,
+        nullable=False
+    )
 
-    change_reason = db.Column(db.String(200))
+    effective_to = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    change_reason = db.Column(
+        db.String(200)
+    )
 
     created_at = db.Column(
         db.DateTime,

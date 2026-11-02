@@ -5,18 +5,56 @@ from extensions import db
 class Employee(db.Model):
     __tablename__ = "employees"
 
-    employee_id = db.Column(db.String(20), primary_key=True)
+    __table_args__ = (
+        db.CheckConstraint(
+            "employment_status IN ('ACTIVE', 'INACTIVE', 'ON_LEAVE', 'TERMINATED')",
+            name="check_valid_employment_status"
+        ),
+    )
 
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
+    employee_id = db.Column(
+        db.String(20),
+        primary_key=True
+    )
 
-    email = db.Column(db.String(150), unique=True, nullable=False)
+    first_name = db.Column(
+        db.String(100),
+        nullable=False
+    )
 
-    role_id = db.Column(db.Integer, nullable=False)
-    level_id = db.Column(db.Integer, nullable=False)
-    location_id = db.Column(db.Integer, nullable=False)
+    last_name = db.Column(
+        db.String(100),
+        nullable=False
+    )
 
-    hire_date = db.Column(db.Date, nullable=False)
+    email = db.Column(
+        db.String(150),
+        unique=True,
+        nullable=False
+    )
+
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey("roles.role_id"),
+        nullable=False
+    )
+
+    level_id = db.Column(
+        db.Integer,
+        db.ForeignKey("levels.level_id"),
+        nullable=False
+    )
+
+    location_id = db.Column(
+        db.Integer,
+        db.ForeignKey("locations.location_id"),
+        nullable=False
+    )
+
+    hire_date = db.Column(
+        db.Date,
+        nullable=False
+    )
 
     employment_status = db.Column(
         db.String(20),
