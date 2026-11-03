@@ -37,7 +37,6 @@ def create_app(test_config=None):
 
     # Project directories
     base_dir = Path(__file__).resolve().parent
-    project_root = base_dir.parent
 
     # Database configuration
     configured_db_path = os.getenv("COMPVISTA_DB_PATH")
@@ -45,11 +44,13 @@ def create_app(test_config=None):
     if configured_db_path:
         db_path = Path(configured_db_path)
 
+        # Relative paths resolve from backend folder
         if not db_path.is_absolute():
-            db_path = project_root / db_path
+            db_path = base_dir / db_path
     else:
         db_path = base_dir / "compvista.db"
 
+    db_path = db_path.resolve()
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     app.config.update(
@@ -100,6 +101,8 @@ app = create_app()
 if __name__ == "__main__":
 
     with app.app_context():
+
+        # Creates missing tables without deleting existing records
         db.create_all()
 
         print("CompVista database tables ready!")

@@ -1,382 +1,324 @@
-# CompVista
-### Compensation Equity & Disparity Analysis Platform
-
-CompVista is a data-driven platform designed to analyze employee compensation, compare salaries across roles, levels, and locations, and identify potential unexplained pay disparities.
-
-The platform helps HR teams understand compensation fairness through salary benchmarking, effective-dated compensation bands, explainable analysis, evidence-based adjustment proposals, and approval tracking.
-
-## Key Features
-
-### Compensation Analysis
-- Synthetic HR compensation data generation.
-- Employee, Role, Level, Location and CompensationBand master data.
-- Effective-dated compensation bands.
-- Salary history management.
-- Salary normalization based on currency and FTE.
-- Historical foreign exchange rate conversion to INR.
-- Compa-ratio and within-band position calculations.
-- Comparable employee group analysis.
-- Compensation disparity detection.
-- Below-band and peer-pay-gap detection.
-- Data quality validation and reporting.
-- Ground truth dataset for detector evaluation.
-
-### Proposal Management
-- Evidence-based adjustment proposals.
-- Proposal submission, approval and rejection workflow.
-- Salary adjustment application.
-- Duplicate adjustment prevention.
-- Audit trail and approval history tracking.
-- Employee location history tracking.
-
-### Authentication and Authorization
-- Candidate registration and login.
-- JWT-based authentication.
-- Secure password hashing.
-- Role-based access control (RBAC).
-- Three user roles: Candidate, HR and Admin.
-- Protected compensation analysis APIs.
-- Candidate access restricted to their linked employee record.
-- HR and Admin access to organization-level analysis.
-- Staff account provisioning through a local administrative script.
-
-### Dataset and Reporting
-- Synthetic dataset containing 5,000 employees.
-- CSV and JSON dataset exports.
-- SQL seed data export.
-- SHA-256 checksum generation for export verification.
-- Ground truth records in CSV and JSON formats.
-- Database constraint validation.
-
-## Technology Stack
-
-- Python
-- Flask
-- Flask-SQLAlchemy
-- SQLAlchemy
-- SQLite
-- Flask-JWT-Extended
-- Werkzeug password hashing
-- Pandas
-- NumPy
-- Faker
-- React.js (frontend development)
-- Git and GitHub
-
-## User Roles
-
-| Role | Permissions |
-|---|---|
-| Candidate | Access own linked compensation information and proposals |
-| HR | Organization-level compensation analysis and proposal management |
-| Admin | Administrative access to protected analysis and proposal APIs |
+CompVista
 
-Public registration creates Candidate accounts only. HR and Admin accounts are provisioned through a local staff account creation script.
+Compensation Equity & Disparity Analysis Platform
 
-## Authentication API
+CompVista is a compensation analysis platform that helps HR teams review employee pay across roles, levels, locations, currencies, and full-time-equivalent (FTE) arrangements. It provides compensation benchmarking, disparity indicators, data-quality visibility, adjustment proposals, and an approval workflow.
 
-Base URL: `http://127.0.0.1:5000`
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| POST | `/api/auth/register` | Register a Candidate |
-| POST | `/api/auth/login` | Authenticate and receive JWT |
-| GET | `/api/auth/me` | Retrieve authenticated user profile |
 
-## Compensation Analysis API
+Data notice: CompVista uses synthetic employee and compensation data for demonstration. It is not intended to make employment decisions automatically. Analysis flags are indicators for human review, not proof of discrimination or a definitive finding of inequity.
 
-| Method | Endpoint | Access |
-|---|---|---|
-| GET | `/api/analysis/summary` | HR, Admin |
-| GET | `/api/analysis/results` | HR, Admin |
-| GET | `/api/analysis/me` | Linked Candidate |
 
-Protected endpoints require a JWT access token in the Authorization header.
 
-## Project Status
+Features
 
-**Backend Development – Core Compensation Analysis and Security Implemented**
 
-Implemented components include:
 
-- Core database design and SQLAlchemy models.
-- Synthetic HR data generation.
-- Compensation band master data.
-- Compensation analysis services.
-- Historical data validation.
-- Historical FX conversion and INR normalization.
-- JWT authentication and password hashing.
-- Candidate, HR and Admin role-based authorization.
-- Protected analysis APIs.
-- Proposal lifecycle and approval workflow.
-- Ground truth scenarios for missing salary, below-band and peer-pay-gap detection.
-- CSV, JSON and SQL dataset exports.
-- Database constraint validation.
-- Repeat-export SHA-256 checksum verification.
+Compensation analysis
 
-The backend regression test suite can be executed using:
 
-`python -m pytest tests -q`
 
-The previously recorded regression result was 26 passing tests. Run the command above to verify the current codebase.
 
-Frontend development, complete frontend-backend integration, and remaining end-to-end testing are pending.
 
-## Installation and Setup
+Employee, role, level, location, salary, and compensation-band data.
 
-### 1. Clone the Repository
 
-```bash
-git clone https://github.com/janu1996/CompVista.git
-cd CompVista
-```
 
-### 2. Create Virtual Environment
+Effective-dated compensation bands.
 
-```powershell
-python -m venv venv
-```
 
-### 3. Activate Virtual Environment
 
-```powershell
-.\venv\Scripts\Activate.ps1
-```
+Salary normalization using currency and FTE information.
 
-### 4. Install Dependencies
 
-```powershell
-python -m pip install -r requirements.txt
-```
 
-### 5. Configure Environment Variables
+Compa-ratio and band-position calculations.
 
-Set a secure JWT secret in PowerShell:
 
-```powershell
-$env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
-```
 
-Configure the database path to the intended local database. For example:
+Comparable employee group analysis.
 
-```powershell
-$env:COMPVISTA_DB_PATH = "backend/compvista_backup.db"
-```
 
-Keep secret values in environment variables or a local `.env` file. Never commit secrets or database files.
 
-### 6. Run Flask Backend
+Potential compensation disparity flags and HR-review indicators.
 
-```powershell
-python backend/app.py
-```
 
-Backend URL:
 
-`http://127.0.0.1:5000`
+Data-quality reporting, including visibility into records excluded from analysis.
 
-Health check:
 
-`http://127.0.0.1:5000/health`
 
-## Staff Account Provisioning
+Proposal and approval workflow
 
-HR and Admin accounts are created using the local staff provisioning script.
 
-```powershell
-python backend/create_staff_user.py
-```
 
-The script supports HR and ADMIN roles and requests passwords securely through the terminal.
 
-Do not expose staff credentials or JWT tokens in source code or GitHub.
 
-## Testing
+Generate evidence-informed adjustment proposals for HR review.
 
-Run the backend regression tests:
 
-```powershell
-python -m pytest tests -q
-```
 
-The existing recorded test result is 26 passing tests.
+Submit draft proposals for approval.
 
-Additional standalone validation scripts cover:
 
-- Historical FX rate lookup and conversion.
-- INR-normalized compensation analysis.
-- Missing salary detection.
-- Below-band detection.
-- Peer-pay-gap detection.
-- Negative salary database constraint.
-- Invalid FTE database constraint.
-- Invalid compensation band constraint.
-- Ground truth CSV and JSON consistency.
 
-The standalone workflow scripts under `src/` and `backend/` are separate from the pytest suite and require separate execution and review.
+View proposal details and history.
 
-## Data Generation and Validation
 
-Run the synthetic data generator:
 
-```powershell
-python src/generate.py
-```
+Approve or reject submitted proposals with reviewer remarks.
 
-The generator uses a fixed random seed (`20261022`) and Faker seed for reproducible data generation.
 
-Run compensation band generation:
 
-```powershell
-python src/role_data.py
-python src/band_data.py
-```
+Apply approved salary adjustments through the proposal workflow.
 
-Run band validation:
 
-```powershell
-python src/verify_bands.py
-```
 
-Run general dataset validation:
+Track proposal lifecycle and audit/history information.
 
-```powershell
-python src/verify_data.py
-```
 
-### Dataset Export
 
-Configure the database from which the dataset should be exported:
+Frontend
 
-```powershell
-$env:COMPVISTA_DB_PATH = "backend/compvista_backup.db"
-```
 
-Run the export script:
 
-```powershell
-Push-Location backend
-python export_dataset.py
-Pop-Location
-```
 
-The export script generates CSV and JSON files for the core dataset tables and a SQL INSERT data export.
 
-Export locations:
+Dashboard with compensation and alert summaries.
 
-- `data/csv/`
-- `data/json/`
-- `data/sql/compvista_seed.sql`
-- `data/export_manifest.json`
 
-The export manifest records table row counts, export file locations and a SHA-256 checksum.
 
-Run the export script again against the same unchanged database to verify that the CSV and JSON export checksum remains identical.
+Compensation Analysis, Employees, Anomalies, and Data Quality views.
 
-This verifies repeat-export consistency for the same database. It does not, by itself, prove that two independent fresh database generation runs produce identical datasets.
 
-### Ground Truth Dataset
 
-Ground truth records are maintained separately in:
+Reports & Exports with CSV downloads.
 
-- `data/csv/ground_truth.csv`
-- `data/json/ground_truth.json`
 
-The current ground truth contains nine controlled scenarios:
 
-- Seven missing-salary cases.
-- One below-band scenario.
-- One peer-pay-gap scenario.
+Proposals and Approvals workflow screens.
 
-These records describe expected detector outcomes and support evaluation of compensation analysis results.
 
-### Currency Normalization
 
-CompVista normalizes compensation values into INR for cross-currency analysis.
+Settings for profile, organization display preferences, and notification preferences.
 
-The synthetic FX dataset uses:
+Settings persistence note: The current Settings page stores preferences in the browser's localStorage. These preferences are browser-local and are not synchronized to the backend or shared across devices.
 
-- INR to INR: 1.0
-- GBP to INR: 110.0
+Technology stack
 
-The GBP rate is a fixed synthetic assumption for this demonstration dataset, not a live or historical market exchange rate.
 
-FX conversions use effective-dated rates so that salary comparisons can use the applicable conversion rate for the analysis date.
 
-**Database Safety:** Migration scripts may target isolated test databases. Do not run migration scripts or temporary test scripts against an existing populated database without a verified backup and explicit review.
 
-## AI Usage and Validation
 
-AI assistance was used during development to support implementation, debugging, documentation and test design.
+Backend: Python, Flask, Flask-SQLAlchemy / SQLAlchemy, Flask-JWT-Extended
 
-AI-assisted code and suggestions were reviewed against the project requirements and validated through application-level checks, database constraints and detector scenario tests.
 
-The project uses synthetic employee data. No real employee compensation information, production credentials or private HR records should be included in prompts or source control.
 
-AI-generated suggestions are not treated as automatically correct; implementation decisions and validation results must be reviewed before use.
+Database: SQLite
 
-## Disclaimer
 
-This project uses synthetic employee data for demonstration and analysis purposes. It does not contain real employee compensation information.
 
-The synthetic exchange rates are demonstration assumptions and must not be treated as actual financial market rates.
+Data processing: Pandas, NumPy, Faker
 
-Compensation disparity flags are indicators for HR review and do not independently establish discrimination or legal non-compliance.
 
-## Future Enhancements
 
-- Complete React frontend dashboard.
-- Candidate, HR and Admin role-based user interfaces.
-- Frontend-backend API integration.
-- Secure candidate-to-employee account linking.
-- Comprehensive end-to-end testing.
-- Advanced compensation benchmarking reports.
-- Additional explainable disparity detection.
-- Final deployment and documentation.
+Frontend: React, Vite, JavaScript
 
-## Entity Relationship Diagram
 
-![CompVista ER Diagram](ER_Diagram.png)
 
-## Project Structure
+UI/icons: CSS and Lucide React icons
 
-```text
+
+
+Repository layout
+
 CompVista/
 ├── backend/
 │   ├── app.py
-│   ├── extensions.py
-│   ├── create_staff_user.py
-│   ├── create_users_table.py
-│   ├── export_dataset.py
 │   ├── models/
 │   ├── routes/
 │   └── services/
 ├── data/
-│   ├── csv/
-│   ├── json/
-│   └── sql/
 ├── docs/
 ├── frontend/
+│   ├── public/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
 ├── reports/
 ├── src/
+│   ├── generate.py
+│   ├── role_data.py
+│   ├── band_data.py
+│   └── verification and migration scripts
 ├── tests/
 ├── ER_Diagram.png
 ├── requirements.txt
-├── README.md
-└── .gitignore
-```
+├── .gitignore
+└── README.md
 
-## Git and Security
 
-The following files and directories must remain excluded from Git:
 
-- `venv/` and `.venv/`, including nested virtual environments.
-- `.env` and secret files.
-- SQLite database files.
-- Python cache files.
-- `node_modules/` and build output.
-- Local logs and temporary test artifacts.
+Prerequisites
 
-Only source code, safe configuration examples, documentation, required dataset exports and required project assets should be committed.
 
-Never upload virtual environments, database files, JWT tokens, staff credentials or private configuration to GitHub.
+
+
+
+Python 3.10 or a compatible version supported by the dependencies.
+
+
+
+Node.js and npm.
+
+
+
+Git.
+
+
+
+Setup
+
+Run commands from the repository root unless a step says otherwise.
+
+1. Clone the repository
+
+git clone https://github.com/janu1996/CompVista.git
+cd CompVista
+
+
+
+2. Create and activate the Python environment
+
+Windows PowerShell:
+
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+Install backend dependencies:
+
+python -m pip install -r requirements.txt
+
+
+
+3. Configure backend environment
+
+Set a strong, private JWT secret for the current PowerShell session:
+
+$env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
+
+If you are using a prepared local database, set its path explicitly. Example only:
+
+$env:COMPVISTA_DB_PATH = "backend/compvista_backup.db"
+
+Use the database filename supplied with your own local setup. Do not commit database files, credentials, JWT secrets, or .env files to Git.
+
+4. Start the backend
+
+From the repository root:
+
+python backend/app.py
+
+The API is configured for local development at:
+
+http://127.0.0.1:5000
+
+Keep the backend terminal running.
+
+5. Install and start the frontend
+
+Open a second terminal:
+
+cd frontend
+npm install
+npm run dev
+
+Vite normally serves the frontend at:
+
+http://localhost:5173
+
+If the frontend uses a different backend URL, configure VITE_API_BASE_URL according to the frontend API client configuration. Do not place secrets in Vite environment variables.
+
+Synthetic data and reproducibility
+
+The synthetic data generation workflow uses the fixed seed:
+
+20261022
+
+The repository includes data-generation, compensation-band, validation, and migration scripts under src/. Review each script and its configured database target before running it.
+
+Example commands:
+
+python src/generate.py
+python src/role_data.py
+python src/band_data.py
+python src/verify_bands.py
+python src/verify_data.py
+
+Important database safety: Some historical salary and employee-location migration scripts were developed and tested against isolated test databases. Do not run migration or reset scripts against a populated database unless you have identified the exact target, made a separate backup, and verified the migration plan. Never delete or overwrite an existing project database as a setup shortcut.
+
+API and access
+
+The backend exposes authentication, compensation analysis, and proposal-related routes. Protected endpoints require a valid JWT access token. The frontend API client is responsible for attaching the token to authenticated requests.
+
+For the exact route list and request/response schemas, refer to the route modules under backend/routes/; this README intentionally avoids documenting unverified endpoint details.
+
+Verification status
+
+The following user-observed frontend workflows have been exercised during the current development session:
+
+
+
+
+
+Settings preferences save in the browser and remain after a page refresh.
+
+
+
+Reports & Exports CSV downloads.
+
+
+
+Proposal submission and status updates.
+
+
+
+Approvals page listing and proposal detail view.
+
+
+
+Approve and reject actions with remarks.
+
+These are manual workflow checks, not a claim that every acceptance criterion or every browser/API combination has passed. Backend regression tests and the challenge requirements must be checked separately before release.
+
+Security and Git hygiene
+
+Before committing or pushing:
+
+
+
+
+
+Keep venv/, node_modules/, build output, .env files, secrets, logs, and local database files out of Git.
+
+
+
+Check staged files with git status and git diff --cached --stat.
+
+
+
+Inspect staged changes for credentials and local paths.
+
+
+
+Do not stage every untracked diagnostic or one-off migration script without reviewing its purpose.
+
+
+
+Never commit real employee data. This project is intended to use synthetic data.
+
+
+
+Disclaimer
+
+CompVista is a demonstration and decision-support project using synthetic data. Its outputs require qualified human review and should not be treated as legal, compliance, or employment decisions.

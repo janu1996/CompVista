@@ -236,9 +236,10 @@ def get_all_proposals():
             ],
         }), 200
 
-    except Exception:
-        return _error("Failed to fetch proposals.", 500)
-
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        return _error(str(exc), 500)
 
 # --------------------------------------------------
 # 2. GET PROPOSAL DETAILS
@@ -362,9 +363,10 @@ def generate_proposals():
     except ValueError as exc:
         return _error(str(exc), 400)
 
-    except Exception:
-        return _error("Proposal generation failed.", 500)
-
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+    return _error(str(exc), 500)
 
 # --------------------------------------------------
 # COMMON PROPOSAL ACTION
