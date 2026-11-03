@@ -1,89 +1,70 @@
-
 from datetime import datetime, timezone
 from decimal import Decimal
 
 import pytest
 
 from extensions import db
-
 from models import (
     AdjustmentProposal,
     SalaryRecord,
     AuditLog,
-    ProposalHistory
+    ProposalHistory,
 )
-
 from services.proposal_service import generate_adjustment_proposals
-
 from services.approval_service import (
     submit_proposal,
     approve_proposal,
-    apply_proposal
+    apply_proposal,
 )
 
 
 def create_approved_proposal(proposal_scenario):
-
-    result = generate_adjustment_proposals(
-        proposed_by="Pytest"
-    )
-
+    result = generate_adjustment_proposals(proposed_by="Pytest")
     proposal_id = result["proposals"][0]["proposal_id"]
 
     submit_proposal(
         proposal_id=proposal_id,
         submitted_by="Test Submitter",
-        remarks="Submitted for approval."
+        remarks="Submitted for approval.",
     )
-
     approve_proposal(
         proposal_id=proposal_id,
         approved_by="Test HR Manager",
-        remarks="Approved for salary adjustment."
+        remarks="Approved for salary adjustment.",
     )
-
     return proposal_id
 
 
 def test_apply_approved_proposal(proposal_scenario):
-
     proposal_id = create_approved_proposal(proposal_scenario)
 
     result = apply_proposal(
         proposal_id=proposal_id,
-        applied_by="Test HR Administrator"
+        applied_by="Test HR Administrator",
     )
 
     assert result["success"] is True
     assert result["status"] == "APPLIED"
 
     proposal = db.session.get(AdjustmentProposal, proposal_id)
-
     assert proposal.status == "APPLIED"
     assert proposal.applied_at is not None
 
 
 def test_salary_records_updated_correctly(proposal_scenario):
-
     old_salary_id = proposal_scenario["salary"].salary_id
-
     proposal_id = create_approved_proposal(proposal_scenario)
 
     result = apply_proposal(
         proposal_id=proposal_id,
-        applied_by="Test HR Administrator"
+        applied_by="Test HR Administrator",
     )
 
     old_salary = db.session.get(SalaryRecord, old_salary_id)
-
-    new_salary = db.session.get(
-        SalaryRecord,
-        result["new_salary_id"]
-    )
+    new_salary = db.session.get(SalaryRecord, result["new_salary_id"])
 
     assert old_salary is not None
     assert old_salary.effective_to is not None
-
     assert new_salary is not None
     assert new_salary.employee_id == "EMP-TEST-001"
     assert new_salary.currency_code == "INR"
@@ -91,12 +72,9 @@ def test_salary_records_updated_correctly(proposal_scenario):
 
 
 def test_apply_salary_with_partial_fte(proposal_scenario):
-
     salary = proposal_scenario["salary"]
-
     salary.fte = 0.5
     salary.base_salary = Decimal("250000.00")
-
     db.session.commit()
 
     proposal = AdjustmentProposal(
@@ -107,91 +85,163 @@ def test_apply_salary_with_partial_fte(proposal_scenario):
         currency_code="INR",
         reason="FTE calculation test",
         issue_type="LOW_COMPA_RATIO",
-        status="APPROVED",
+        status="DRAFT",
         proposed_by="Pytest",
-        approved_by="Test HR Manager",
-        approved_at=datetime.now(timezone.utc)
     )
-
     db.session.add(proposal)
     db.session.commit()
 
+    submit_proposal(
+        proposal_id=proposal.proposal_id,
+        submitted_by="Test Submitter",
+        remarks="Submitting FTE test proposal.",
+    )
+    approve_proposal(
+        proposal_id=proposal.proposal_id,
+        approved_by="Test HR Manager",
+        remarks="Approving FTE test proposal.",
+    )
+
     result = apply_proposal(
         proposal_id=proposal.proposal_id,
-        applied_by="Test HR Administrator"
+        applied_by="Test HR Administrator",
     )
+    new_salary = db.session.get(SalaryRecord, result["new_salary_id"])
 
-    new_salary = db.session.get(
-        SalaryRecord,
-        result["new_salary_id"]
-    )
-
-    # 680000 * 0.5 = 340000
-
+    # 680000 normalized salary * 0.5 FTE = 340000 actual salary.
+    assert result["success"] is True
     assert Decimal(str(new_salary.base_salary)) == Decimal("340000.00")
     assert new_salary.fte == 0.5
+    assert result["status"] == "APPLIED"
 
 
 def test_cannot_apply_draft_proposal(proposal_scenario):
-
-    result = generate_adjustment_proposals(
-        proposed_by="Pytest"
-    )
-
+    result = generate_adjustment_proposals(proposed_by="Pytest")
     proposal_id = result["proposals"][0]["proposal_id"]
 
     with pytest.raises(ValueError, match="Only APPROVED"):
-
         apply_proposal(
             proposal_id=proposal_id,
-            applied_by="Test HR Administrator"
+            applied_by="Test HR Administrator",
         )
 
     proposal = db.session.get(AdjustmentProposal, proposal_id)
-
     assert proposal.status == "DRAFT"
 
 
 def test_apply_creates_audit_and_history(proposal_scenario):
-
     proposal_id = create_approved_proposal(proposal_scenario)
 
     apply_proposal(
         proposal_id=proposal_id,
-        applied_by="Test HR Administrator"
+        applied_by="Test HR Administrator",
     )
 
     history = ProposalHistory.query.filter_by(
         proposal_id=proposal_id
     ).all()
-
-    audit = AuditLog.query.filter_by(
-        entity_id=proposal_id
-    ).all()
+    audit = AuditLog.query.filter_by(entity_id=proposal_id).all()
 
     assert len(history) == 4
     assert history[-1].new_status == "APPLIED"
-
     assert len(audit) == 4
     assert audit[-1].action == "APPLY"
 
 
 def test_cannot_apply_same_proposal_twice(proposal_scenario):
-
     proposal_id = create_approved_proposal(proposal_scenario)
 
     first_result = apply_proposal(
         proposal_id=proposal_id,
-        applied_by="Test HR Administrator"
+        applied_by="Test HR Administrator",
     )
-
     assert first_result["status"] == "APPLIED"
 
     with pytest.raises(ValueError, match="Only APPROVED"):
-
         apply_proposal(
             proposal_id=proposal_id,
-            applied_by="Test HR Administrator"
+            applied_by="Test HR Administrator",
         )
 
     assert SalaryRecord.query.count() == 2
+
+
+def test_cannot_apply_approved_proposal_without_approval_history(proposal_scenario):
+    salary = proposal_scenario["salary"]
+    proposal = AdjustmentProposal(
+        proposal_id="PROP-NO-HISTORY",
+        employee_id=salary.employee_id,
+        current_salary_id=salary.salary_id,
+        proposed_salary=Decimal("700000.00"),
+        currency_code="INR",
+        reason="Approval history validation",
+        issue_type="LOW_COMPA_RATIO",
+        status="APPROVED",
+        proposed_by="Pytest",
+        approved_by="Forged Approver",
+        approved_at=datetime.now(timezone.utc),
+    )
+    db.session.add(proposal)
+    db.session.commit()
+
+    with pytest.raises(ValueError, match="Valid approval history not found"):
+        apply_proposal(
+            proposal_id=proposal.proposal_id,
+            applied_by="Test HR Administrator",
+        )
+
+    db.session.refresh(proposal)
+    assert proposal.status == "APPROVED"
+    assert SalaryRecord.query.count() == 1
+
+
+def test_cannot_apply_adjustment_for_inactive_employee(proposal_scenario):
+    proposal_id = create_approved_proposal(proposal_scenario)
+
+    employee = proposal_scenario["employee"]
+    employee.employment_status = "TERMINATED"
+    db.session.commit()
+
+    with pytest.raises(ValueError, match="ACTIVE employees"):
+        apply_proposal(
+            proposal_id=proposal_id,
+            applied_by="Test HR Administrator",
+        )
+
+    assert SalaryRecord.query.count() == 1
+
+
+def test_cannot_apply_salary_above_compensation_band(proposal_scenario):
+    salary = proposal_scenario["salary"]
+    proposal = AdjustmentProposal(
+        proposal_id="PROP-ABOVE-BAND",
+        employee_id=salary.employee_id,
+        current_salary_id=salary.salary_id,
+        proposed_salary=Decimal("1300000.00"),
+        currency_code="INR",
+        reason="Band limit validation",
+        issue_type="LOW_COMPA_RATIO",
+        status="DRAFT",
+        proposed_by="Pytest",
+    )
+    db.session.add(proposal)
+    db.session.commit()
+
+    submit_proposal(
+        proposal_id=proposal.proposal_id,
+        submitted_by="Test Submitter",
+        remarks="Submitting band validation proposal.",
+    )
+    approve_proposal(
+        proposal_id=proposal.proposal_id,
+        approved_by="Test HR Manager",
+        remarks="Approved for validation test.",
+    )
+
+    with pytest.raises(ValueError, match="within the compensation band"):
+        apply_proposal(
+            proposal_id=proposal.proposal_id,
+            applied_by="Test HR Administrator",
+        )
+
+    assert SalaryRecord.query.count() == 1
