@@ -1,7 +1,8 @@
-
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from statistics import median
+
+from sqlalchemy import or_, func
 
 from models import (
     Employee,
@@ -18,7 +19,7 @@ from models import (
 def to_decimal(value):
     """Convert a value safely into Decimal."""
 
-    return Decimal(str(value or 0))
+    return Decimal(str(value if value is not None else 0))
 
 
 def money(value):
@@ -30,9 +31,15 @@ def money(value):
     )
 
 
+def normalize_currency(currency_code):
+    """Normalize currency codes for safe comparison."""
+
+    return str(currency_code or "").strip().upper()
+
+
 def analyze_compensation(as_of_date=None):
     """
-    Analyze current compensation for active employees.
+    Analyze compensation for active employees as of a given date.
 
     Comparisons are made only within the same:
     - Role
@@ -40,15 +47,30 @@ def analyze_compensation(as_of_date=None):
     - Location
     - Currency
 
-    Salary is normalized to full-time equivalent (FTE)
-    before comparison.
+    Salary is normalized to full-time equivalent (FTE).
 
-    This function creates analysis results only.
-    It does not automatically change employee salaries.
+    Only effective salary records, compensation bands, and
+    performance evidence available on the analysis date
+    are considered.
+
+    This function only generates analysis results.
+    It does not modify employee salaries.
     """
+
+    # --------------------------------------------------
+    # 0. VALIDATE ANALYSIS DATE
+    # --------------------------------------------------
 
     if as_of_date is None:
         as_of_date = date.today()
+
+    if isinstance(as_of_date, str):
+        as_of_date = date.fromisoformat(as_of_date)
+
+    if not isinstance(as_of_date, date):
+        raise ValueError(
+            "as_of_date must be a date object or YYYY-MM-DD string."
+        )
 
     # --------------------------------------------------
     # 1. FETCH ACTIVE EMPLOYEES
@@ -58,18 +80,39 @@ def analyze_compensation(as_of_date=None):
         Employee.employment_status == "ACTIVE"
     ).all()
 
+    if not employees:
+        return {
+            "summary": {
+                "analysis_date": as_of_date.isoformat(),
+                "employees_analyzed": 0,
+                "employees_flagged": 0,
+                "employees_without_flags": 0,
+                "below_band_minimum": 0,
+                "low_compa_ratio": 0,
+                "peer_pay_gap": 0
+            },
+            "results": []
+        }
+
+    employee_ids = [
+        employee.employee_id
+        for employee in employees
+    ]
+
     # --------------------------------------------------
     # 2. FETCH EFFECTIVE SALARY RECORDS
     # --------------------------------------------------
 
     salary_records = SalaryRecord.query.filter(
+        SalaryRecord.employee_id.in_(employee_ids),
         SalaryRecord.effective_from <= as_of_date,
-        db_or := (
-            (SalaryRecord.effective_to.is_(None)) |
-            (SalaryRecord.effective_to > as_of_date)
+        or_(
+            SalaryRecord.effective_to.is_(None),
+            SalaryRecord.effective_to > as_of_date
         )
     ).order_by(
-        SalaryRecord.effective_from.desc()
+        SalaryRecord.effective_from.desc(),
+        SalaryRecord.salary_id.desc()
     ).all()
 
     # Keep the latest effective salary record per employee.
@@ -78,18 +121,17 @@ def analyze_compensation(as_of_date=None):
     for record in salary_records:
 
         if record.employee_id not in latest_salary:
-
             latest_salary[record.employee_id] = record
 
     # --------------------------------------------------
-    # 3. FETCH COMPENSATION BANDS
+    # 3. FETCH EFFECTIVE COMPENSATION BANDS
     # --------------------------------------------------
 
     bands = CompensationBand.query.filter(
         CompensationBand.effective_from <= as_of_date,
-        (
-            CompensationBand.effective_to.is_(None) |
-            (CompensationBand.effective_to > as_of_date)
+        or_(
+            CompensationBand.effective_to.is_(None),
+            CompensationBand.effective_to > as_of_date
         )
     ).all()
 
@@ -102,18 +144,21 @@ def analyze_compensation(as_of_date=None):
     # 4. FETCH PERFORMANCE EVIDENCE
     # --------------------------------------------------
 
-    performance_records = PerformanceEvidence.query.all()
+    # Exclude evidence recorded after the analysis date.
+    performance_records = PerformanceEvidence.query.filter(
+        PerformanceEvidence.employee_id.in_(employee_ids),
+        func.date(PerformanceEvidence.recorded_at)
+        <= as_of_date.isoformat()
+    ).order_by(
+        PerformanceEvidence.review_period.desc(),
+        PerformanceEvidence.recorded_at.desc()
+    ).all()
 
     latest_performance = {}
 
     for record in performance_records:
 
-        current = latest_performance.get(record.employee_id)
-
-        if (
-            current is None
-            or record.review_period > current.review_period
-        ):
+        if record.employee_id not in latest_performance:
             latest_performance[record.employee_id] = record
 
     # --------------------------------------------------
@@ -134,14 +179,41 @@ def analyze_compensation(as_of_date=None):
         if band is None:
             continue
 
-        if salary.fte <= 0:
+        # Validate that the salary band belongs to the
+        # employee's current role, level, and location.
+        if (
+            band.role_id != employee.role_id
+            or band.level_id != employee.level_id
+            or band.location_id != employee.location_id
+        ):
+            continue
+
+        # Salary and band currencies must match.
+        salary_currency = normalize_currency(
+            salary.currency_code
+        )
+
+        band_currency = normalize_currency(
+            band.currency_code
+        )
+
+        if (
+            not salary_currency
+            or salary_currency != band_currency
+        ):
+            continue
+
+        # Validate FTE.
+        actual_salary = to_decimal(salary.base_salary)
+        fte = to_decimal(salary.fte)
+
+        if fte <= 0 or fte > 1:
+            continue
+
+        if actual_salary <= 0:
             continue
 
         # Normalize salary to full-time equivalent.
-        actual_salary = to_decimal(salary.base_salary)
-
-        fte = to_decimal(salary.fte)
-
         normalized_salary = money(
             actual_salary / fte
         )
@@ -150,18 +222,28 @@ def analyze_compensation(as_of_date=None):
         midpoint = money(band.midpoint_salary)
         maximum = money(band.max_salary)
 
-        if midpoint <= 0 or maximum <= minimum:
+        # Validate compensation band values.
+        if not (
+            minimum > 0
+            and minimum < midpoint < maximum
+        ):
             continue
 
-        # Compa-ratio.
+        # --------------------------------------------------
+        # COMPA-RATIO
+        # --------------------------------------------------
+
         compa_ratio = (
             normalized_salary / midpoint
         ) * Decimal("100")
 
-        # Position within salary band.
+        # --------------------------------------------------
+        # BAND POSITION
+        # --------------------------------------------------
+
         band_position = (
-            (normalized_salary - minimum) /
-            (maximum - minimum)
+            (normalized_salary - minimum)
+            / (maximum - minimum)
         ) * Decimal("100")
 
         performance = latest_performance.get(
@@ -175,9 +257,11 @@ def analyze_compensation(as_of_date=None):
 
         analysis_rows.append({
             "employee_id": employee.employee_id,
+
             "employee_name": (
-                employee.first_name + " " + employee.last_name
+                f"{employee.first_name} {employee.last_name}"
             ),
+
             "role_id": employee.role_id,
             "level_id": employee.level_id,
             "location_id": employee.location_id,
@@ -185,9 +269,10 @@ def analyze_compensation(as_of_date=None):
             "salary_id": salary.salary_id,
             "band_id": band.band_id,
 
-            "currency_code": salary.currency_code,
+            "currency_code": salary_currency,
+
             "actual_salary": money(actual_salary),
-            "fte": float(salary.fte),
+            "fte": float(fte),
             "normalized_salary": normalized_salary,
 
             "band_minimum": minimum,
@@ -250,7 +335,10 @@ def analyze_compensation(as_of_date=None):
 
         flags = []
 
-        # Flag 1: Salary below the band minimum.
+        # --------------------------------------------------
+        # FLAG 1: BELOW BAND MINIMUM
+        # --------------------------------------------------
+
         if employee_salary < row["band_minimum"]:
 
             flags.append({
@@ -262,7 +350,10 @@ def analyze_compensation(as_of_date=None):
                 )
             })
 
-        # Flag 2: Low compa-ratio.
+        # --------------------------------------------------
+        # FLAG 2: LOW COMPA-RATIO
+        # --------------------------------------------------
+
         if row["compa_ratio"] < Decimal("85"):
 
             flags.append({
@@ -274,13 +365,16 @@ def analyze_compensation(as_of_date=None):
                 )
             })
 
-        # Flag 3: Lower salary compared with peers.
+        # --------------------------------------------------
+        # FLAG 3: PEER PAY GAP
+        # --------------------------------------------------
+
         # Require at least 3 other employees.
         if len(peers) >= 4 and peer_median > 0:
 
             peer_difference = (
-                (peer_median - employee_salary) /
-                peer_median
+                (peer_median - employee_salary)
+                / peer_median
             ) * Decimal("100")
 
             if peer_difference >= Decimal("10"):
@@ -320,11 +414,15 @@ def analyze_compensation(as_of_date=None):
 
     summary = {
         "analysis_date": as_of_date.isoformat(),
+
         "employees_analyzed": len(results),
+
         "employees_flagged": len(flagged_employees),
+
         "employees_without_flags": (
             len(results) - len(flagged_employees)
         ),
+
         "below_band_minimum": sum(
             1 for row in results
             if any(
@@ -332,6 +430,7 @@ def analyze_compensation(as_of_date=None):
                 for flag in row["potential_issues"]
             )
         ),
+
         "low_compa_ratio": sum(
             1 for row in results
             if any(
@@ -339,6 +438,7 @@ def analyze_compensation(as_of_date=None):
                 for flag in row["potential_issues"]
             )
         ),
+
         "peer_pay_gap": sum(
             1 for row in results
             if any(
@@ -352,10 +452,3 @@ def analyze_compensation(as_of_date=None):
         "summary": summary,
         "results": results
     }
-
-
-# --------------------------------------------------
-# IMPORT REQUIRED SQLALCHEMY EXPRESSION
-# --------------------------------------------------
-
-from sqlalchemy import or_ as db_or

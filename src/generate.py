@@ -1,4 +1,3 @@
-
 """
 CompVista - Synthetic Compensation Data Generator
 
@@ -8,8 +7,8 @@ Generates:
 - 8 Locations
 - 5,000 Employees
 - 800 Compensation Bands
-- Salary History (2023-2026)
-- Performance Evidence (2023-2026)
+- Salary History (2024-2026)
+- Performance Evidence (2024-2026)
 - Employee Tenure
 - Promotion History
 
@@ -360,10 +359,42 @@ def generate_compensation_bands():
 
 
 # --------------------------------------------------
-# GENERATE SALARY HISTORY
+# COMMON TENURE END DATE
 # --------------------------------------------------
 
+def get_employee_tenure_end_date(employee):
+    """
+    Generate one reproducible end date for inactive and terminated
+    employees. Salary, promotion and tenure records all use this date.
+    """
 
+    if employee.employment_status not in (
+        "INACTIVE",
+        "TERMINATED",
+    ):
+        return None
+
+    earliest_end = employee.hire_date + timedelta(days=1)
+
+    if earliest_end > DATA_END_DATE:
+        return None
+
+    rng = random.Random(
+        f"{SEED}-{employee.employee_id}-tenure"
+    )
+
+    days_available = (
+        DATA_END_DATE - earliest_end
+    ).days
+
+    return earliest_end + timedelta(
+        days=rng.randint(0, days_available)
+    )
+
+
+# --------------------------------------------------
+# GENERATE SALARY HISTORY
+# --------------------------------------------------
 
 def generate_salary_history():
 
@@ -372,96 +403,170 @@ def generate_salary_history():
     ).all()
 
     bands = CompensationBand.query.all()
+    promotions = Promotion.query.all()
 
     if not employees or not bands:
         raise RuntimeError("Employees or bands are missing.")
 
-    existing_records = {
-        record.salary_id
-        for record in SalaryRecord.query.all()
-    }
+    existing_count = SalaryRecord.query.count()
+
+    if existing_count:
+        raise RuntimeError(
+            f"Found {existing_count} existing salary records. "
+            "Run this corrected generator only on a fresh database."
+        )
 
     band_lookup = {
-        (
-            band.role_id,
-            band.level_id,
-            band.location_id,
-        ): band
+        (band.role_id, band.level_id, band.location_id): band
         for band in bands
     }
 
-    records_batch = []
+    promotion_lookup = {
+        promotion.employee_id: promotion
+        for promotion in promotions
+    }
 
+    records_batch = []
     generated = 0
-    skipped = 0
 
     rng = random.Random(SEED + 10)
 
     for employee in employees:
 
-        band = band_lookup.get(
-            (
-                employee.role_id,
-                employee.level_id,
-                employee.location_id,
-            )
+        promotion = promotion_lookup.get(employee.employee_id)
+        tenure_end = get_employee_tenure_end_date(employee)
+
+        employment_end_exclusive = (
+            tenure_end + timedelta(days=1)
+            if tenure_end is not None
+            else DATA_END_DATE + timedelta(days=1)
         )
-
-        if band is None:
-            raise RuntimeError(
-                f"Missing band for {employee.employee_id}"
-            )
-
-        annual_salary = (
-            Decimal(str(band.midpoint_salary))
-            * Decimal(str(rng.uniform(0.82, 0.90)))
-        ).quantize(CENT)
 
         effective_dates = []
 
         for year in HISTORY_YEARS:
 
             year_start = date(year, 1, 1)
-            year_end = date(year, 12, 31)
+            next_year_start = date(year + 1, 1, 1)
 
-            if employee.hire_date > year_end:
+            if employee.hire_date >= next_year_start:
                 continue
 
-            start = max(year_start, employee.hire_date)
+            period_start = max(
+                year_start,
+                employee.hire_date,
+            )
 
-            if start <= DATA_END_DATE:
-                effective_dates.append((year, start))
+            period_end = min(
+                next_year_start,
+                DATA_END_DATE + timedelta(days=1),
+                employment_end_exclusive,
+            )
 
+            if period_start >= period_end:
+                continue
+
+            boundaries = [period_start]
+
+            if (
+                promotion
+                and period_start < promotion.promotion_date < period_end
+            ):
+                boundaries.append(promotion.promotion_date)
+
+            boundaries.append(period_end)
+
+            for segment_index in range(len(boundaries) - 1):
+
+                effective_dates.append(
+                    (
+                        year,
+                        boundaries[segment_index],
+                        boundaries[segment_index + 1],
+                    )
+                )
+
+        if not effective_dates:
+            continue
+
+        annual_salary = None
         previous_fte = None
+        previous_band_id = None
+        previous_year = None
+        fte_changed = False
 
-        for index, (year, start_date) in enumerate(effective_dates):
+        for index, (year, start_date, end_date) in enumerate(
+            effective_dates
+        ):
 
-            salary_id = f"SAL-{employee.employee_id}-{year}"
+            if promotion and start_date < promotion.promotion_date:
+                role_id = promotion.previous_role_id
+                level_id = promotion.previous_level_id
+            else:
+                role_id = employee.role_id
+                level_id = employee.level_id
 
-            if salary_id in existing_records:
-                skipped += 1
-                continue
+            band = band_lookup.get(
+                (
+                    role_id,
+                    level_id,
+                    employee.location_id,
+                )
+            )
 
-            if index > 0:
+            if band is None:
+                raise RuntimeError(
+                    f"Missing compensation band for "
+                    f"{employee.employee_id}, "
+                    f"role={role_id}, level={level_id}"
+                )
+
+            if annual_salary is None:
+
+                annual_salary = (
+                    Decimal(str(band.midpoint_salary))
+                    * Decimal(str(rng.uniform(0.82, 0.90)))
+                ).quantize(CENT)
+
+            elif year != previous_year:
+
                 annual_salary = (
                     annual_salary
                     * Decimal(str(rng.uniform(1.03, 1.08)))
                 ).quantize(CENT)
 
-            # Generate historical FTE.
-            fte = rng.choices(
-                [1.0, 0.75, 0.5],
-                weights=[90, 6, 4],
-            )[0]
+            if (
+                previous_band_id is not None
+                and band.band_id != previous_band_id
+            ):
 
-            # Ensure selected employees have historical FTE changes.
-            if index > 0 and employee.employee_id.endswith("0"):
-                fte = 0.75 if previous_fte == 1.0 else 1.0
+                annual_salary = max(
+                    annual_salary * Decimal("1.08"),
+                    Decimal(str(band.min_salary))
+                    * Decimal("1.01"),
+                ).quantize(CENT)
 
-            fte_changed = (
-                previous_fte is not None
-                and fte != previous_fte
-            )
+            if year != previous_year:
+
+                fte = rng.choices(
+                    [1.0, 0.75, 0.5],
+                    weights=[90, 6, 4],
+                )[0]
+
+                if (
+                    previous_fte is not None
+                    and employee.employee_id.endswith("0")
+                ):
+                    fte = (
+                        0.75 if previous_fte == 1.0 else 1.0
+                    )
+
+                fte_changed = (
+                    previous_fte is not None
+                    and fte != previous_fte
+                )
+
+                previous_fte = fte
 
             fte_decimal = Decimal(str(fte))
 
@@ -482,10 +587,40 @@ def generate_salary_history():
                 annual_salary * fte_decimal
             ).quantize(CENT)
 
-            end_date = None
+            segment_number = sum(
+                1
+                for item in effective_dates[:index + 1]
+                if item[0] == year
+            )
 
-            if index < len(effective_dates) - 1:
-                end_date = effective_dates[index + 1][1]
+            salary_id = (
+                f"SAL-{employee.employee_id}-{year}-{segment_number}"
+            )
+
+            effective_to = end_date
+
+            is_final_segment = (
+                index == len(effective_dates) - 1
+            )
+
+            if (
+                is_final_segment
+                and tenure_end is None
+                and end_date == DATA_END_DATE + timedelta(days=1)
+            ):
+                effective_to = None
+
+            if promotion and start_date == promotion.promotion_date:
+                reason = "Promotion-related salary adjustment"
+
+            elif index == 0:
+                reason = "Initial salary record"
+
+            elif year != previous_year and fte_changed:
+                reason = "Annual merit increase with FTE change"
+
+            else:
+                reason = "Annual merit increase"
 
             records_batch.append(
                 SalaryRecord(
@@ -496,22 +631,14 @@ def generate_salary_history():
                     currency_code=band.currency_code,
                     fte=fte,
                     effective_from=start_date,
-                    effective_to=end_date,
-                    change_reason=(
-                        "Initial salary record"
-                        if index == 0
-                        else (
-                            "Annual merit increase with FTE change"
-                            if fte_changed
-                            else "Annual merit increase"
-                        )
-                    ),
+                    effective_to=effective_to,
+                    change_reason=reason,
                 )
             )
 
-            previous_fte = fte
+            previous_band_id = band.band_id
+            previous_year = year
 
-            existing_records.add(salary_id)
             generated += 1
 
             if len(records_batch) >= 500:
@@ -535,13 +662,12 @@ def generate_salary_history():
             db.session.rollback()
             raise
 
-    print("\nSalary History Generation")
-    print("---------------------------")
-    print("New records generated:", generated)
-    print("Existing records skipped:", skipped)
+    print("\nPromotion-Aware Salary History")
+    print("--------------------------------")
+    print("New salary records generated:", generated)
     print("Total salary records:", SalaryRecord.query.count())
 
-# --------------------------------------------------
+    # --------------------------------------------------
 # GENERATE PERFORMANCE EVIDENCE
 # --------------------------------------------------
 
@@ -567,20 +693,30 @@ def generate_performance_evidence():
     rating_weights = [5, 10, 25, 40, 20]
 
     descriptions = {
-        1: "Performance improvement required. "
-           "Several assigned objectives were not achieved.",
+        1: (
+            "Performance improvement required. "
+            "Several assigned objectives were not achieved."
+        ),
 
-        2: "Developing performance. "
-           "Some objectives were achieved with additional support.",
+        2: (
+            "Developing performance. "
+            "Some objectives were achieved with additional support."
+        ),
 
-        3: "Meets expectations. "
-           "Expected responsibilities and goals were completed.",
+        3: (
+            "Meets expectations. "
+            "Expected responsibilities and goals were completed."
+        ),
 
-        4: "Strong performance. "
-           "Frequently exceeded assigned goals and expectations.",
+        4: (
+            "Strong performance. "
+            "Frequently exceeded assigned goals and expectations."
+        ),
 
-        5: "Outstanding performance. "
-           "Consistently delivered exceptional results.",
+        5: (
+            "Outstanding performance. "
+            "Consistently delivered exceptional results."
+        ),
     }
 
     records_batch = []
@@ -590,9 +726,20 @@ def generate_performance_evidence():
 
     for employee in employees:
 
+        tenure_end = get_employee_tenure_end_date(employee)
+
         for year in HISTORY_YEARS:
 
-            if employee.hire_date > date(year, 12, 31):
+            review_start = date(year, 1, 1)
+            review_end = date(year, 12, 31)
+
+            if employee.hire_date > review_end:
+                continue
+
+            if (
+                tenure_end is not None
+                and review_start > tenure_end
+            ):
                 continue
 
             evidence_id = (
@@ -670,8 +817,6 @@ def generate_tenure():
         for record in Tenure.query.all()
     }
 
-    # Use the latest salary record's FTE so tenure and
-    # salary records use a consistent FTE value.
     latest_salary_fte = {}
 
     salary_records = SalaryRecord.query.order_by(
@@ -682,8 +827,6 @@ def generate_tenure():
 
         if salary.employee_id not in latest_salary_fte:
             latest_salary_fte[salary.employee_id] = salary.fte
-
-    rng = random.Random(SEED + 2)
 
     records_batch = []
 
@@ -709,31 +852,8 @@ def generate_tenure():
             else "PART_TIME"
         )
 
-        end_date = None
-
-        if employee.employment_status in [
-            "INACTIVE",
-            "TERMINATED",
-        ]:
-
-            earliest_end = employee.hire_date + timedelta(days=1)
-
-            if earliest_end <= DATA_END_DATE:
-
-                end_date = rng.choice(
-                    [
-                        earliest_end
-                        + timedelta(
-                            days=rng.randint(
-                                0,
-                                max(
-                                    0,
-                                    (DATA_END_DATE - earliest_end).days
-                                ),
-                            )
-                        )
-                    ]
-                )
+        # Same end date used by salary and promotion generation.
+        end_date = get_employee_tenure_end_date(employee)
 
         records_batch.append(
             Tenure(
@@ -839,14 +959,19 @@ def generate_promotions():
         if previous_level is None:
             continue
 
-        # Employee should have at least one year of service
-        # before the promotion date.
         earliest_promotion = max(
             employee.hire_date + timedelta(days=365),
             date(2023, 1, 1),
         )
 
-        latest_promotion = date(2025, 12, 31)
+        tenure_end = get_employee_tenure_end_date(employee)
+
+        latest_promotion = min(
+            date(2025, 12, 31),
+            tenure_end
+            if tenure_end is not None
+            else date(2025, 12, 31),
+        )
 
         if earliest_promotion > latest_promotion:
             continue
@@ -863,11 +988,9 @@ def generate_promotions():
                 promotion_id=promotion_id,
                 employee_id=employee.employee_id,
 
-                # Role remains the same in this example.
                 previous_role_id=employee.role_id,
                 new_role_id=employee.role_id,
 
-                # Career level increases by one.
                 previous_level_id=previous_level.level_id,
                 new_level_id=current_level.level_id,
 
@@ -910,7 +1033,7 @@ def generate_promotions():
 
     print("\nPromotion Generation")
     print("--------------------")
-    print("New records generated:", generated)
+    print("New promotion records generated:", generated)
     print("Existing records skipped:", skipped)
     print("Total promotion records:", Promotion.query.count())
 
@@ -933,13 +1056,14 @@ def main():
 
             generate_compensation_bands()
 
+            # Promotions must exist before salary history.
+            generate_promotions()
+
             generate_salary_history()
 
             generate_performance_evidence()
 
             generate_tenure()
-
-            generate_promotions()
 
             print("\nCOMPVISTA DATABASE SUMMARY")
             print("============================")
@@ -955,6 +1079,11 @@ def main():
             )
 
             print(
+                "Promotion Records:",
+                Promotion.query.count(),
+            )
+
+            print(
                 "Salary Records:",
                 SalaryRecord.query.count(),
             )
@@ -967,11 +1096,6 @@ def main():
             print(
                 "Tenure Records:",
                 Tenure.query.count(),
-            )
-
-            print(
-                "Promotion Records:",
-                Promotion.query.count(),
             )
 
             print(

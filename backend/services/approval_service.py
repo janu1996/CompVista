@@ -1,4 +1,5 @@
-from datetime import date, datetime
+
+from datetime import date, datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 import json
 
@@ -65,7 +66,7 @@ def update_proposal_status(
 ):
 
     old_status = proposal.status
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
 
     proposal.status = new_status
 
@@ -367,7 +368,7 @@ def apply_proposal(proposal_id, applied_by):
         old_status = proposal.status
 
         proposal.status = "APPLIED"
-        proposal.applied_at = datetime.utcnow()
+        proposal.applied_at = datetime.now(timezone.utc)
 
         # Record proposal history.
         history = ProposalHistory(

@@ -1,13 +1,28 @@
 
+import os
 import sqlite3
+from pathlib import Path
 
-DB_PATH = "backend/compvista_salary_migration_test.db"
+DB_PATH = os.environ.get(
+    "COMPVISTA_DB_PATH",
+    "backend/compvista_backup.db"
+)
 
-connection = sqlite3.connect(DB_PATH)
+db_file = Path(DB_PATH).resolve()
+
+if not db_file.exists():
+    raise FileNotFoundError(f"Database not found: {db_file}")
+
+connection = sqlite3.connect(
+    db_file.as_uri() + "?mode=ro",
+    uri=True
+)
 cursor = connection.cursor()
 
 print("\n===== CURRENCY HISTORY AUDIT =====")
+print("Database:", db_file.name)
 
+# 1. Salary records by currency
 cursor.execute("""
     SELECT currency_code, COUNT(*)
     FROM salary_records
@@ -19,6 +34,7 @@ print("\nSalary records by currency:")
 for row in cursor.fetchall():
     print(row)
 
+# 2. Compensation bands by currency
 cursor.execute("""
     SELECT currency_code, COUNT(*)
     FROM compensation_bands
@@ -30,6 +46,7 @@ print("\nCompensation bands by currency:")
 for row in cursor.fetchall():
     print(row)
 
+# 3. Employees by location currency
 cursor.execute("""
     SELECT
         l.location_name,

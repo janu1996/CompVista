@@ -1,127 +1,138 @@
 
 import os
+import sqlite3
 import sys
+from pathlib import Path
 from collections import Counter
 
-# Use the separate upgrade test database
-os.environ["COMPVISTA_DB_PATH"] = "backend/compvista_upgrade_test.db"
+DB_PATH = os.environ.get(
+    "COMPVISTA_DB_PATH",
+    "backend/compvista_backup.db"
+)
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BACKEND_PATH = os.path.join(PROJECT_ROOT, "backend")
+db_file = Path(DB_PATH).resolve()
 
-if BACKEND_PATH not in sys.path:
-    sys.path.insert(0, BACKEND_PATH)
+if not db_file.exists():
+    raise FileNotFoundError(f"Database not found: {db_file}")
 
-from app import app
-from models import Role, Level, Location, CompensationBand
+connection = sqlite3.connect(
+    db_file.as_uri() + "?mode=ro",
+    uri=True
+)
+cursor = connection.cursor()
 
+success = False
 
-def verify_bands():
-    with app.app_context():
+try:
+    print("\n========== COMPVISTA BAND VALIDATION ==========")
+    print("Database:", db_file.name)
 
-        database_uri = app.config["SQLALCHEMY_DATABASE_URI"]
+    roles = cursor.execute(
+        "SELECT role_id FROM roles"
+    ).fetchall()
 
-        if "compvista_upgrade_test.db" not in database_uri:
-            raise RuntimeError("Wrong database selected!")
+    levels = cursor.execute(
+        "SELECT level_id FROM levels"
+    ).fetchall()
 
-        roles = Role.query.all()
-        levels = Level.query.all()
-        locations = Location.query.all()
-        bands = CompensationBand.query.all()
+    locations = cursor.execute(
+        "SELECT location_id FROM locations"
+    ).fetchall()
 
-        print("\n========== COMPVISTA BAND VALIDATION ==========")
+    bands = cursor.execute("""
+        SELECT band_id, role_id, level_id, location_id,
+               min_salary, midpoint_salary, max_salary,
+               effective_from, effective_to, currency_code
+        FROM compensation_bands
+    """).fetchall()
 
-        print("Total roles:", len(roles))
-        print("Total levels:", len(levels))
-        print("Total locations:", len(locations))
-        print("Total compensation bands:", len(bands))
+    print("Total roles:", len(roles))
+    print("Total levels:", len(levels))
+    print("Total locations:", len(locations))
+    print("Total compensation bands:", len(bands))
 
-        expected_combinations = {
-            (role.role_id, level.level_id, location.location_id)
-            for role in roles
-            for level in levels
-            for location in locations
-        }
+    expected = {
+        (r[0], l[0], loc[0])
+        for r in roles
+        for l in levels
+        for loc in locations
+    }
 
-        actual_combinations = [
-            (band.role_id, band.level_id, band.location_id)
-            for band in bands
-        ]
+    actual = [
+        (b[1], b[2], b[3])
+        for b in bands
+    ]
 
-        counts = Counter(actual_combinations)
+    counts = Counter(actual)
 
-        duplicates = [
-            combination
-            for combination, count in counts.items()
-            if count > 1
-        ]
+    duplicates = [
+        combo for combo, count in counts.items()
+        if count > 1
+    ]
 
-        actual_set = set(actual_combinations)
-        missing = expected_combinations - actual_set
-        unexpected = actual_set - expected_combinations
+    actual_set = set(actual)
+    missing = expected - actual_set
+    unexpected = actual_set - expected
 
-        invalid_ranges = [
-            band.band_id
-            for band in bands
-            if not (
-                band.min_salary < band.midpoint_salary < band.max_salary
-            )
-        ]
+    invalid_ranges = [
+        b[0] for b in bands
+        if not (0 < b[4] < b[5] < b[6])
+    ]
 
-        invalid_dates = [
-            band.band_id
-            for band in bands
-            if band.effective_to is not None
-            and band.effective_from > band.effective_to
-        ]
+    invalid_dates = [
+        b[0] for b in bands
+        if b[8] is not None and b[8] <= b[7]
+    ]
 
-        print("\n========== VALIDATION RESULTS ==========")
+    missing_currency = [
+        b[0] for b in bands
+        if not b[9] or not b[9].strip()
+    ]
 
-        print("Expected combinations:", len(expected_combinations))
-        print("Actual unique combinations:", len(actual_set))
-        print("Duplicate combinations:", len(duplicates))
-        print("Missing combinations:", len(missing))
-        print("Unexpected combinations:", len(unexpected))
-        print("Invalid salary ranges:", len(invalid_ranges))
-        print("Invalid effective dates:", len(invalid_dates))
+    print("\n========== VALIDATION RESULTS ==========")
+    print("Expected combinations:", len(expected))
+    print("Actual unique combinations:", len(actual_set))
+    print("Duplicate combinations:", len(duplicates))
+    print("Missing combinations:", len(missing))
+    print("Unexpected combinations:", len(unexpected))
+    print("Invalid salary ranges:", len(invalid_ranges))
+    print("Invalid effective dates:", len(invalid_dates))
+    print("Missing currencies:", len(missing_currency))
 
-        if duplicates:
-            print("\nDuplicate examples:", duplicates[:5])
+    if duplicates:
+        print("Duplicate examples:", duplicates[:5])
 
-        if missing:
-            print("\nMissing examples:", list(missing)[:5])
+    if missing:
+        print("Missing examples:", list(missing)[:5])
 
-        if unexpected:
-            print("\nUnexpected examples:", list(unexpected)[:5])
+    if invalid_ranges:
+        print("Invalid salary band IDs:", invalid_ranges[:5])
 
-        if invalid_ranges:
-            print("\nInvalid salary band IDs:", invalid_ranges[:5])
+    if invalid_dates:
+        print("Invalid date band IDs:", invalid_dates[:5])
 
-        if invalid_dates:
-            print("\nInvalid date band IDs:", invalid_dates[:5])
+    success = (
+        len(expected) > 0
+        and len(bands) == len(expected)
+        and len(actual_set) == len(expected)
+        and len(duplicates) == 0
+        and len(missing) == 0
+        and len(unexpected) == 0
+        and len(invalid_ranges) == 0
+        and len(invalid_dates) == 0
+        and len(missing_currency) == 0
+    )
 
-        success = (
-            len(roles) == 40
-            and len(levels) == 5
-            and len(locations) == 8
-            and len(bands) == 1600
-            and len(actual_set) == 1600
-            and len(duplicates) == 0
-            and len(missing) == 0
-            and len(unexpected) == 0
-            and len(invalid_ranges) == 0
-            and len(invalid_dates) == 0
-        )
+    print("\n========================================")
 
-        print("\n========================================")
+    if success:
+        print("SUCCESS: ALL BAND VALIDATIONS PASSED!")
+    else:
+        print("VALIDATION FAILED: Please investigate.")
 
-        if success:
-            print("SUCCESS: ALL BAND VALIDATIONS PASSED!")
-        else:
-            print("VALIDATION FAILED: Please check the results.")
+finally:
+    cursor.close()
+    connection.close()
 
-        return success
-
-
-if __name__ == "__main__":
-    verify_bands()
+if not success:
+    sys.exit(1)
