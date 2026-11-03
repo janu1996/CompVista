@@ -1,0 +1,53 @@
+{
+  "roles": {
+    "records": 40,
+    "csv": "data/csv/roles.csv",
+    "json": "data/json/roles.json"
+  },
+  "levels": {
+    "records": 5,
+    "csv": "data/csv/levels.csv",
+    "json": "data/json/levels.json"
+  },
+  "locations": {
+    "records": 8,
+    "csv": "data/csv/locations.csv",
+    "json": "data/json/locations.json"
+  },
+  "employees": {
+    "records": 5000,
+    "csv": "data/csv/employees.csv",
+    "json": "data/json/employees.json"
+  },
+  "compensation_bands": {
+    "records": 1600,
+    "csv": "data/csv/compensation_bands.csv",
+    "json": "data/json/compensation_bands.json"
+  },
+  "fx_rates": {
+    "records": 1,
+    "csv": "data/csv/fx_rates.csv",
+    "json": "data/json/fx_rates.json"
+  },
+  "salary_records": {
+    "records": 16598,
+    "csv": "data/csv/salary_records.csv",
+    "json": "data/json/salary_records.json"
+  },
+  "promotions": {
+    "records": 3103,
+    "csv": "data/csv/promotions.csv",
+    "json": "data/json/promotions.json"
+  },
+  "performance_evidence": {
+    "records": 16596,
+    "csv": "data/csv/performance_evidence.csv",
+    "json": "data/json/performance_evidence.json"
+  },
+  "tenures": {
+    "records": 5000,
+    "csv": "data/csv/tenures.csv",
+    "json": "data/json/tenures.json"
+  },
+  "sha256": "bd7dec6d62fa0978767517688ec319ac7220887bd982619566c11825a7f82ab7"
+}

@@ -1,0 +1,10 @@
+scenario_id,employee_id,expected_issue,severity,expected_detection,analysis_date,description
+GT-MISSING-EMP-000744,EMP-000744,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-MISSING-EMP-001365,EMP-001365,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-MISSING-EMP-001938,EMP-001938,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-MISSING-EMP-003198,EMP-003198,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-MISSING-EMP-003430,EMP-003430,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-MISSING-EMP-004360,EMP-004360,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-MISSING-EMP-004874,EMP-004874,MISSING_SALARY,HIGH,missing_salary,2026-10-26,Active employee has no applicable salary record on the analysis date.
+GT-BELOW-BAND-001,EMP-000204,BELOW_BAND_MINIMUM,HIGH,BELOW_BAND_MINIMUM,2026-10-26,Controlled test: salary temporarily reduced to INR 10000.00 against band minimum INR 10560.00; detector successfully identified the below-band issue. Original salary was restored.
+GT-PEER-GAP-001,EMP-000204,PEER_PAY_GAP,MEDIUM,PEER_PAY_GAP,2026-10-26,Controlled test: four comparable peers were temporarily set to INR 14000.00. Detector identified PEER_PAY_GAP and LOW_COMPA_RATIO. All original salaries were restored.

@@ -27,6 +27,7 @@ from models import (
     ProposalHistory,
     EmployeeLocationHistory,
     User,
+    FXRate,
 )
 
 

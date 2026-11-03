@@ -1,0 +1,32 @@
+[
+  {
+    "level_id": 1,
+    "level_name": "Intern",
+    "level_rank": 1,
+    "description": "Intern career level"
+  },
+  {
+    "level_id": 2,
+    "level_name": "Junior",
+    "level_rank": 2,
+    "description": "Junior career level"
+  },
+  {
+    "level_id": 3,
+    "level_name": "Mid-Level",
+    "level_rank": 3,
+    "description": "Mid-Level career level"
+  },
+  {
+    "level_id": 4,
+    "level_name": "Senior",
+    "level_rank": 4,
+    "description": "Senior career level"
+  },
+  {
+    "level_id": 5,
+    "level_name": "Lead",
+    "level_rank": 5,
+    "description": "Lead career level"
+  }
+]

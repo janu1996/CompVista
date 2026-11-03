@@ -1,0 +1,282 @@
+[
+  {
+    "role_id": 1,
+    "role_name": "Software Engineer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Software Engineer position"
+  },
+  {
+    "role_id": 2,
+    "role_name": "Frontend Developer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Frontend Developer position"
+  },
+  {
+    "role_id": 3,
+    "role_name": "Backend Developer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Backend Developer position"
+  },
+  {
+    "role_id": 4,
+    "role_name": "Full Stack Developer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Full Stack Developer position"
+  },
+  {
+    "role_id": 5,
+    "role_name": "Data Analyst",
+    "department": "Analytics",
+    "job_family": "Data",
+    "description": "Data Analyst position"
+  },
+  {
+    "role_id": 6,
+    "role_name": "Data Scientist",
+    "department": "Analytics",
+    "job_family": "Data",
+    "description": "Data Scientist position"
+  },
+  {
+    "role_id": 7,
+    "role_name": "ML Engineer",
+    "department": "AI",
+    "job_family": "Data",
+    "description": "ML Engineer position"
+  },
+  {
+    "role_id": 8,
+    "role_name": "DevOps Engineer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "DevOps Engineer position"
+  },
+  {
+    "role_id": 9,
+    "role_name": "QA Engineer",
+    "department": "Quality",
+    "job_family": "Technology",
+    "description": "QA Engineer position"
+  },
+  {
+    "role_id": 10,
+    "role_name": "Product Manager",
+    "department": "Product",
+    "job_family": "Management",
+    "description": "Product Manager position"
+  },
+  {
+    "role_id": 11,
+    "role_name": "UI UX Designer",
+    "department": "Design",
+    "job_family": "Creative",
+    "description": "UI UX Designer position"
+  },
+  {
+    "role_id": 12,
+    "role_name": "HR Executive",
+    "department": "Human Resources",
+    "job_family": "Corporate",
+    "description": "HR Executive position"
+  },
+  {
+    "role_id": 13,
+    "role_name": "HR Manager",
+    "department": "Human Resources",
+    "job_family": "Management",
+    "description": "HR Manager position"
+  },
+  {
+    "role_id": 14,
+    "role_name": "Finance Analyst",
+    "department": "Finance",
+    "job_family": "Corporate",
+    "description": "Finance Analyst position"
+  },
+  {
+    "role_id": 15,
+    "role_name": "Business Analyst",
+    "department": "Business",
+    "job_family": "Corporate",
+    "description": "Business Analyst position"
+  },
+  {
+    "role_id": 16,
+    "role_name": "Project Manager",
+    "department": "Delivery",
+    "job_family": "Management",
+    "description": "Project Manager position"
+  },
+  {
+    "role_id": 17,
+    "role_name": "Cybersecurity Analyst",
+    "department": "Security",
+    "job_family": "Technology",
+    "description": "Cybersecurity Analyst position"
+  },
+  {
+    "role_id": 18,
+    "role_name": "Cloud Architect",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Cloud Architect position"
+  },
+  {
+    "role_id": 19,
+    "role_name": "Technical Writer",
+    "department": "Documentation",
+    "job_family": "Corporate",
+    "description": "Technical Writer position"
+  },
+  {
+    "role_id": 20,
+    "role_name": "Customer Success Manager",
+    "department": "Support",
+    "job_family": "Management",
+    "description": "Customer Success Manager position"
+  },
+  {
+    "role_id": 21,
+    "role_name": "Data Engineer",
+    "department": "Analytics",
+    "job_family": "Data",
+    "description": "Data Engineer position"
+  },
+  {
+    "role_id": 22,
+    "role_name": "Database Administrator",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Database Administrator position"
+  },
+  {
+    "role_id": 23,
+    "role_name": "Mobile App Developer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Mobile App Developer position"
+  },
+  {
+    "role_id": 24,
+    "role_name": "Python Developer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Python Developer position"
+  },
+  {
+    "role_id": 25,
+    "role_name": "Java Developer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Java Developer position"
+  },
+  {
+    "role_id": 26,
+    "role_name": "Automation Test Engineer",
+    "department": "Quality",
+    "job_family": "Technology",
+    "description": "Automation Test Engineer position"
+  },
+  {
+    "role_id": 27,
+    "role_name": "Security Engineer",
+    "department": "Security",
+    "job_family": "Technology",
+    "description": "Security Engineer position"
+  },
+  {
+    "role_id": 28,
+    "role_name": "Network Engineer",
+    "department": "Infrastructure",
+    "job_family": "Technology",
+    "description": "Network Engineer position"
+  },
+  {
+    "role_id": 29,
+    "role_name": "System Administrator",
+    "department": "IT Operations",
+    "job_family": "Technology",
+    "description": "System Administrator position"
+  },
+  {
+    "role_id": 30,
+    "role_name": "Site Reliability Engineer",
+    "department": "Engineering",
+    "job_family": "Technology",
+    "description": "Site Reliability Engineer position"
+  },
+  {
+    "role_id": 31,
+    "role_name": "AI Research Scientist",
+    "department": "AI",
+    "job_family": "Data",
+    "description": "AI Research Scientist position"
+  },
+  {
+    "role_id": 32,
+    "role_name": "Business Intelligence Developer",
+    "department": "Analytics",
+    "job_family": "Data",
+    "description": "Business Intelligence Developer position"
+  },
+  {
+    "role_id": 33,
+    "role_name": "UX Researcher",
+    "department": "Design",
+    "job_family": "Creative",
+    "description": "UX Researcher position"
+  },
+  {
+    "role_id": 34,
+    "role_name": "Graphic Designer",
+    "department": "Design",
+    "job_family": "Creative",
+    "description": "Graphic Designer position"
+  },
+  {
+    "role_id": 35,
+    "role_name": "Talent Acquisition Specialist",
+    "department": "Human Resources",
+    "job_family": "Corporate",
+    "description": "Talent Acquisition Specialist position"
+  },
+  {
+    "role_id": 36,
+    "role_name": "Payroll Specialist",
+    "department": "Finance",
+    "job_family": "Corporate",
+    "description": "Payroll Specialist position"
+  },
+  {
+    "role_id": 37,
+    "role_name": "Accountant",
+    "department": "Finance",
+    "job_family": "Corporate",
+    "description": "Accountant position"
+  },
+  {
+    "role_id": 38,
+    "role_name": "Marketing Manager",
+    "department": "Marketing",
+    "job_family": "Management",
+    "description": "Marketing Manager position"
+  },
+  {
+    "role_id": 39,
+    "role_name": "Operations Manager",
+    "department": "Operations",
+    "job_family": "Management",
+    "description": "Operations Manager position"
+  },
+  {
+    "role_id": 40,
+    "role_name": "Technical Support Engineer",
+    "department": "Support",
+    "job_family": "Technology",
+    "description": "Technical Support Engineer position"
+  }
+]

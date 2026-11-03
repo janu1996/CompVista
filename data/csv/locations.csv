@@ -1,0 +1,9 @@
+location_id,location_name,country,country_code,currency_code,cost_of_living_index
+1,Visakhapatnam,India,IN,INR,0.85
+2,Hyderabad,India,IN,INR,1.0
+3,Bengaluru,India,IN,INR,1.15
+4,Chennai,India,IN,INR,0.95
+5,Pune,India,IN,INR,1.05
+6,Mumbai,India,IN,INR,1.25
+7,Delhi,India,IN,INR,1.1
+8,London,United Kingdom,GB,GBP,1.4

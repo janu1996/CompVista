@@ -10,9 +10,32 @@ from sqlalchemy.exc import IntegrityError
 
 from extensions import db
 from models.user import User
+from models.employee import Employee
 
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+
+
+def get_current_user():
+    """Return the authenticated active user."""
+    identity = get_jwt_identity()
+
+    try:
+        user_id = int(identity)
+    except (TypeError, ValueError):
+        return None
+
+    user = db.session.get(User, user_id)
+
+    if not user or not user.is_active:
+        return None
+
+    return user
+
+
+def staff_required(user):
+    """Only HR and Admin can perform staff operations."""
+    return user is not None and user.role in {"HR", "ADMIN"}
 
 
 # -----------------------------------------
@@ -160,19 +183,9 @@ def login():
 @jwt_required()
 def current_user():
 
-    identity = get_jwt_identity()
+    user = get_current_user()
 
-    try:
-        user_id = int(identity)
-    except (TypeError, ValueError):
-        return jsonify({
-            "success": False,
-            "message": "Invalid authentication token."
-        }), 401
-
-    user = db.session.get(User, user_id)
-
-    if not user or not user.is_active:
+    if not user:
         return jsonify({
             "success": False,
             "message": "User account not found or inactive."
@@ -187,3 +200,125 @@ def current_user():
             "employee_id": user.employee_id
         }
     }), 200
+
+
+# -----------------------------------------
+# 4. LINK CANDIDATE TO EMPLOYEE
+# POST /api/auth/link-employee
+# HR / ADMIN ONLY
+# -----------------------------------------
+@auth_bp.route("/link-employee", methods=["POST"])
+@jwt_required()
+def link_employee():
+
+    staff_user = get_current_user()
+
+    if not staff_required(staff_user):
+        return jsonify({
+            "success": False,
+            "message": "Access denied. HR or Admin permission required."
+        }), 403
+
+    data = request.get_json(silent=True) or {}
+
+    candidate_email = str(
+        data.get("candidate_email", "")
+    ).strip().lower()
+
+    if not candidate_email:
+        return jsonify({
+            "success": False,
+            "message": "Candidate email is required."
+        }), 400
+
+    try:
+        valid_email = validate_email(
+            candidate_email,
+            check_deliverability=False
+        )
+        candidate_email = valid_email.normalized.lower()
+
+    except EmailNotValidError:
+        return jsonify({
+            "success": False,
+            "message": "Please enter a valid candidate email."
+        }), 400
+
+    # Find the registered candidate account.
+    candidate = User.query.filter_by(
+        email=candidate_email,
+        role="CANDIDATE"
+    ).with_for_update().first()
+
+    if not candidate:
+        return jsonify({
+            "success": False,
+            "message": "Candidate account not found."
+        }), 404
+
+    if not candidate.is_active:
+        return jsonify({
+            "success": False,
+            "message": "Candidate account is inactive."
+        }), 403
+
+    if candidate.employee_id:
+        return jsonify({
+            "success": False,
+            "message": "Candidate is already linked to an employee."
+        }), 409
+
+    # Employee is identified using the matching email.
+    # The request never accepts an employee_id.
+    employee = Employee.query.filter(
+        db.func.lower(Employee.email) == candidate_email
+    ).first()
+
+    if not employee:
+        return jsonify({
+            "success": False,
+            "message": "No matching employee record found for this email."
+        }), 404
+
+    # Prevent linking an employee already assigned to another account.
+    existing_link = User.query.filter(
+        User.employee_id == employee.employee_id
+    ).first()
+
+    if existing_link:
+        return jsonify({
+            "success": False,
+            "message": "This employee is already linked to another account."
+        }), 409
+
+    try:
+        candidate.employee_id = employee.employee_id
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Candidate successfully linked to employee record.",
+            "data": {
+                "user_id": candidate.user_id,
+                "email": candidate.email,
+                "employee_id": candidate.employee_id,
+                "linked_by": staff_user.email
+            }
+        }), 200
+
+    except IntegrityError:
+        db.session.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": "Employee linking conflict. Please verify the account."
+        }), 409
+
+    except Exception:
+        db.session.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": "Employee linking failed. Please try again."
+        }), 500

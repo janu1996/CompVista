@@ -1,0 +1,83 @@
+[
+  {
+    "scenario_id": "GT-MISSING-EMP-000744",
+    "employee_id": "EMP-000744",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-MISSING-EMP-001365",
+    "employee_id": "EMP-001365",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-MISSING-EMP-001938",
+    "employee_id": "EMP-001938",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-MISSING-EMP-003198",
+    "employee_id": "EMP-003198",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-MISSING-EMP-003430",
+    "employee_id": "EMP-003430",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-MISSING-EMP-004360",
+    "employee_id": "EMP-004360",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-MISSING-EMP-004874",
+    "employee_id": "EMP-004874",
+    "expected_issue": "MISSING_SALARY",
+    "severity": "HIGH",
+    "expected_detection": "missing_salary",
+    "analysis_date": "2026-10-26",
+    "description": "Active employee has no applicable salary record on the analysis date."
+  },
+  {
+    "scenario_id": "GT-BELOW-BAND-001",
+    "employee_id": "EMP-000204",
+    "expected_issue": "BELOW_BAND_MINIMUM",
+    "severity": "HIGH",
+    "expected_detection": "BELOW_BAND_MINIMUM",
+    "analysis_date": "2026-10-26",
+    "description": "Controlled test: salary temporarily reduced to INR 10000.00 against band minimum INR 10560.00; detector successfully identified the below-band issue. Original salary was restored."
+  },
+  {
+    "scenario_id": "GT-PEER-GAP-001",
+    "employee_id": "EMP-000204",
+    "expected_issue": "PEER_PAY_GAP",
+    "severity": "MEDIUM",
+    "expected_detection": "PEER_PAY_GAP",
+    "analysis_date": "2026-10-26",
+    "description": "Controlled test: four comparable peers were temporarily set to INR 14000.00. Detector identified PEER_PAY_GAP and LOW_COMPA_RATIO. All original salaries were restored."
+  }
+]

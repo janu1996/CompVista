@@ -1,0 +1,66 @@
+[
+  {
+    "location_id": 1,
+    "location_name": "Visakhapatnam",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 0.85
+  },
+  {
+    "location_id": 2,
+    "location_name": "Hyderabad",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 1.0
+  },
+  {
+    "location_id": 3,
+    "location_name": "Bengaluru",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 1.15
+  },
+  {
+    "location_id": 4,
+    "location_name": "Chennai",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 0.95
+  },
+  {
+    "location_id": 5,
+    "location_name": "Pune",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 1.05
+  },
+  {
+    "location_id": 6,
+    "location_name": "Mumbai",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 1.25
+  },
+  {
+    "location_id": 7,
+    "location_name": "Delhi",
+    "country": "India",
+    "country_code": "IN",
+    "currency_code": "INR",
+    "cost_of_living_index": 1.1
+  },
+  {
+    "location_id": 8,
+    "location_name": "London",
+    "country": "United Kingdom",
+    "country_code": "GB",
+    "currency_code": "GBP",
+    "cost_of_living_index": 1.4
+  }
+]

@@ -1,0 +1,2 @@
+fx_rate_id,from_currency,to_currency,rate,effective_from,effective_to,source,created_at
+1,GBP,INR,110.000000,2023-01-01,,SYNTHETIC_DATASET,2026-11-03T14:14:39

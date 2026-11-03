@@ -1,0 +1,41 @@
+role_id,role_name,department,job_family,description
+1,Software Engineer,Engineering,Technology,Software Engineer position
+2,Frontend Developer,Engineering,Technology,Frontend Developer position
+3,Backend Developer,Engineering,Technology,Backend Developer position
+4,Full Stack Developer,Engineering,Technology,Full Stack Developer position
+5,Data Analyst,Analytics,Data,Data Analyst position
+6,Data Scientist,Analytics,Data,Data Scientist position
+7,ML Engineer,AI,Data,ML Engineer position
+8,DevOps Engineer,Engineering,Technology,DevOps Engineer position
+9,QA Engineer,Quality,Technology,QA Engineer position
+10,Product Manager,Product,Management,Product Manager position
+11,UI UX Designer,Design,Creative,UI UX Designer position
+12,HR Executive,Human Resources,Corporate,HR Executive position
+13,HR Manager,Human Resources,Management,HR Manager position
+14,Finance Analyst,Finance,Corporate,Finance Analyst position
+15,Business Analyst,Business,Corporate,Business Analyst position
+16,Project Manager,Delivery,Management,Project Manager position
+17,Cybersecurity Analyst,Security,Technology,Cybersecurity Analyst position
+18,Cloud Architect,Engineering,Technology,Cloud Architect position
+19,Technical Writer,Documentation,Corporate,Technical Writer position
+20,Customer Success Manager,Support,Management,Customer Success Manager position
+21,Data Engineer,Analytics,Data,Data Engineer position
+22,Database Administrator,Engineering,Technology,Database Administrator position
+23,Mobile App Developer,Engineering,Technology,Mobile App Developer position
+24,Python Developer,Engineering,Technology,Python Developer position
+25,Java Developer,Engineering,Technology,Java Developer position
+26,Automation Test Engineer,Quality,Technology,Automation Test Engineer position
+27,Security Engineer,Security,Technology,Security Engineer position
+28,Network Engineer,Infrastructure,Technology,Network Engineer position
+29,System Administrator,IT Operations,Technology,System Administrator position
+30,Site Reliability Engineer,Engineering,Technology,Site Reliability Engineer position
+31,AI Research Scientist,AI,Data,AI Research Scientist position
+32,Business Intelligence Developer,Analytics,Data,Business Intelligence Developer position
+33,UX Researcher,Design,Creative,UX Researcher position
+34,Graphic Designer,Design,Creative,Graphic Designer position
+35,Talent Acquisition Specialist,Human Resources,Corporate,Talent Acquisition Specialist position
+36,Payroll Specialist,Finance,Corporate,Payroll Specialist position
+37,Accountant,Finance,Corporate,Accountant position
+38,Marketing Manager,Marketing,Management,Marketing Manager position
+39,Operations Manager,Operations,Management,Operations Manager position
+40,Technical Support Engineer,Support,Technology,Technical Support Engineer position
