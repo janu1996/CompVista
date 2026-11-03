@@ -1,13 +1,17 @@
 
+from pathlib import Path
+import os
+
 from flask import Flask
 from flask_cors import CORS
-from extensions import db
-import os
-from pathlib import Path
+
+from extensions import db, jwt
 
 from routes.analysis_routes import analysis_bp
 from routes.proposal_routes import proposal_bp
+from routes.auth_routes import auth_bp
 
+# Register all database models
 from models import (
     Employee,
     Role,
@@ -20,59 +24,93 @@ from models import (
     Promotion,
     AdjustmentProposal,
     AuditLog,
-    ProposalHistory
+    ProposalHistory,
+    EmployeeLocationHistory,
+    User,
 )
 
-app = Flask(__name__)
 
-# Project directories
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent
+def create_app(test_config=None):
 
-# Default database: original project database
-default_db_path = BASE_DIR / "compvista.db"
+    app = Flask(__name__)
 
-# Optional database path from environment variable
-configured_db_path = os.getenv("COMPVISTA_DB_PATH")
+    # Project directories
+    base_dir = Path(__file__).resolve().parent
+    project_root = base_dir.parent
 
-if configured_db_path:
-    db_path = Path(configured_db_path)
+    # Database configuration
+    configured_db_path = os.getenv("COMPVISTA_DB_PATH")
 
-    if not db_path.is_absolute():
-        db_path = PROJECT_ROOT / db_path
-else:
-    db_path = default_db_path
+    if configured_db_path:
+        db_path = Path(configured_db_path)
 
-# Ensure database directory exists
-db_path.parent.mkdir(parents=True, exist_ok=True)
+        if not db_path.is_absolute():
+            db_path = project_root / db_path
+    else:
+        db_path = base_dir / "compvista.db"
 
-# Database configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"sqlite:///{db_path.as_posix()}"
-)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config.update(
+        SQLALCHEMY_DATABASE_URI=f"sqlite:///{db_path.as_posix()}",
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        JSON_SORT_KEYS=False,
 
-db.init_app(app)
-CORS(app)
+        # JWT configuration
+        JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY"),
+        JWT_ACCESS_TOKEN_EXPIRES=1800,
+    )
 
-# Register API routes
-app.register_blueprint(analysis_bp)
-app.register_blueprint(proposal_bp)
+    if test_config:
+        app.config.update(test_config)
+
+    # Initialize extensions
+    db.init_app(app)
+    jwt.init_app(app)
+
+    CORS(app)
+
+    # Register blueprints
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(analysis_bp)
+    app.register_blueprint(proposal_bp)
+
+    @app.route("/")
+    def home():
+        return {
+            "message": "Welcome to CompVista!",
+            "status": "Backend is running successfully",
+        }, 200
+
+    @app.route("/health", methods=["GET"])
+    def health():
+        return {
+            "success": True,
+            "status": "healthy",
+            "service": "CompVista API",
+        }, 200
+
+    return app
 
 
-@app.route("/")
-def home():
-    return {
-        "message": "Welcome to CompVista!",
-        "status": "Backend is running successfully"
-    }
+app = create_app()
 
 
 if __name__ == "__main__":
+
     with app.app_context():
         db.create_all()
-        print("CompVista database tables ready!")
-        print("Database location:", db_path)
 
-    app.run(debug=True)
+        print("CompVista database tables ready!")
+        print(
+            "Database location:",
+            app.config["SQLALCHEMY_DATABASE_URI"]
+        )
+
+    debug_enabled = os.getenv(
+        "FLASK_DEBUG", ""
+    ).strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+
+    app.run(debug=debug_enabled)

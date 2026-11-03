@@ -1,17 +1,35 @@
+
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 venv/
 **/venv/
-.env
+.venv/
+**/.venv/
 
-# Database
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Database files
 *.db
+*.sqlite
+*.sqlite3
 instance/
+
+# Logs and temporary files
+*.log
+*.tmp
+.pytest_cache/
 
 # React
 node_modules/
 dist/
+build/
 
 # IDE
 .vscode/

@@ -1,14 +1,13 @@
-
 from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 import sqlite3
 
-# Initialize SQLAlchemy
 db = SQLAlchemy()
+jwt = JWTManager()
 
 
-# Enable foreign-key enforcement for every SQLite connection
 @event.listens_for(Engine, "connect")
 def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, sqlite3.Connection):

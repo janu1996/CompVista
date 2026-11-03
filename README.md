@@ -7,253 +7,101 @@ The platform helps HR teams understand compensation fairness through salary benc
 
 ## Key Features
 
-- Synthetic HR compensation data generation
-- Employee, Role, Level, Location and CompensationBand master data
-- Effective-dated compensation bands
-- Salary history management
-- Salary normalization based on currency and FTE
-- Compa-ratio and within-band position calculations
-- Comparable employee group analysis
-- Compensation disparity detection
-- Evidence-based adjustment proposals
-- Proposal submission, approval and rejection workflow
-- Salary adjustment application
-- Employee location history tracking
-- Audit trail and approval history tracking
-- Data validation and reporting
+### Compensation Analysis
+- Synthetic HR compensation data generation.
+- Employee, Role, Level, Location and CompensationBand master data.
+- Effective-dated compensation bands.
+- Salary history management.
+- Salary normalization based on currency and FTE.
+- Compa-ratio and within-band position calculations.
+- Comparable employee group analysis.
+- Compensation disparity detection.
+- Data quality validation and reporting.
+
+### Proposal Management
+- Evidence-based adjustment proposals.
+- Proposal submission, approval and rejection workflow.
+- Salary adjustment application.
+- Duplicate adjustment prevention.
+- Audit trail and approval history tracking.
+- Employee location history tracking.
+
+### Authentication and Authorization
+- Candidate registration and login.
+- JWT-based authentication.
+- Secure password hashing.
+- Role-based access control (RBAC).
+- Three user roles: Candidate, HR and Admin.
+- Protected compensation analysis APIs.
+- Candidate access restricted to their linked employee record.
+- HR and Admin access to organization-level analysis.
+- Staff account provisioning through a local administrative script.
 
 ## Technology Stack
 
 - Python
 - Flask
+- Flask-SQLAlchemy
 - SQLAlchemy
 - SQLite
+- Flask-JWT-Extended
+- Werkzeug password hashing
 - Pandas
 - NumPy
 - Faker
-- React.js
+- React.js (frontend development)
 - Git and GitHub
+
+## User Roles
+
+| Role | Permissions |
+|---|---|
+| Candidate | Access own linked compensation information and proposals |
+| HR | Organization-level compensation analysis and proposal management |
+| Admin | Administrative access to protected analysis and proposal APIs |
+
+Public registration creates Candidate accounts only. HR and Admin accounts are provisioned through a local staff account creation script.
+
+## Authentication API
+
+Base URL: `http://127.0.0.1:5000`
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/auth/register` | Register a Candidate |
+| POST | `/api/auth/login` | Authenticate and receive JWT |
+| GET | `/api/auth/me` | Retrieve authenticated user profile |
+
+## Compensation Analysis API
+
+| Method | Endpoint | Access |
+|---|---|---|
+| GET | `/api/analysis/summary` | HR, Admin |
+| GET | `/api/analysis/results` | HR, Admin |
+| GET | `/api/analysis/me` | Linked Candidate |
+
+Protected endpoints require a JWT access token in the Authorization header.
 
 ## Project Status
 
-🚧 Under Development
+**Backend Development – Authentication and Authorization Implemented**
 
-Core database design, synthetic data generation, compensation band master data, compensation analysis services, proposal lifecycle workflow, and historical data validation have been implemented and tested. Frontend development and remaining data scenarios are pending.
+Implemented components include:
+- Core database design and SQLAlchemy models.
+- Synthetic HR data generation.
+- Compensation band master data.
+- Compensation analysis services.
+- Proposal lifecycle and approval workflow.
+- Historical data validation.
+- JWT authentication and password hashing.
+- Candidate, HR and Admin role-based authorization.
+- Protected analysis and proposal APIs.
 
-## Disclaimer
+The existing backend regression test suite completed with **26 passing tests** using:
 
-This project uses synthetic employee data for demonstration and analysis purposes. It does not contain real employee compensation information.
+`python -m pytest tests -q`
 
----
-
-## Development Progress
-
-### Day 1 – November 1, 2026
-
-**Project Setup**
-
-- Created CompVista GitHub repository.
-- Connected local project with GitHub.
-- Created initial project folder structure.
-- Added requirements.txt and .gitignore.
-- Created initial README.md.
-
-**Database Design**
-
-- Designed core database entities.
-- Defined primary keys and foreign keys.
-- Documented entity relationships.
-- Designed AuditLog and ProposalHistory.
-- Created ER diagram.
-- Created initial data dictionary.
-
-**Status:** Project setup and initial database documentation completed.
-
-### Day 2 – November 2, 2026
-
-**Database Implementation**
-
-- Implemented SQLAlchemy database models.
-- Configured Flask application with SQLite.
-- Implemented Employee, Role, Level and Location models.
-- Implemented CompensationBand and SalaryRecord models.
-- Implemented PerformanceEvidence, Tenure and Promotion models.
-- Implemented AdjustmentProposal, AuditLog and ProposalHistory models.
-
-**Synthetic Data Generation**
-
-- Implemented synthetic HR data generation.
-- Generated 5,000 employee records.
-- Created role, level and location master data.
-- Generated salary history and related HR records.
-- Used a fixed random seed for reproducibility.
-
-**Compensation Band Master Data**
-
-- Expanded role master data to 40 roles.
-- Configured 5 levels and 8 locations.
-- Generated 1,600 effective-dated compensation bands.
-- Migrated 16,598 salary references to the new band IDs.
-- Preserved all 16,598 salary records during migration.
-- Removed 800 obsolete band records from the separate upgrade test database.
-
-**Band Validation**
-
-- Verified 1,600 expected role-level-location combinations.
-- Checked duplicate combinations.
-- Checked missing and unexpected combinations.
-- Validated minimum, midpoint and maximum salary ranges.
-- Validated effective dates.
-
-**Validation Results**
-
-- Expected combinations: 1,600
-- Actual unique combinations: 1,600
-- Duplicate combinations: 0
-- Missing combinations: 0
-- Unexpected combinations: 0
-- Invalid salary ranges: 0
-- Invalid effective dates: 0
-
-**Status:** Compensation band master data migration and validation completed successfully in the upgrade test database.
-
-### Day 3 – November 3, 2026
-
-**Salary History Enhancement**
-
-- Updated salary history generation logic to support historical FTE changes.
-- Changed the target salary history period to 2024–2026.
-- Created a separate salary history migration script.
-- Removed 3,248 records from 2023 in the isolated salary migration test database.
-- Preserved salary records for 2024, 2025 and 2026.
-- Updated historical FTE values for selected synthetic employees.
-- Recalculated actual salary amounts according to the updated FTE.
-
-**Salary Migration Results**
-
-- Salary records before migration: 16,599
-- 2023 records removed: 3,248
-- Salary records after migration: 13,351
-- FTE records updated: 6
-- Invalid FTE values: 0
-- Invalid salary values: 0
-- Invalid employee foreign keys: 0
-- Invalid compensation band foreign keys: 0
-- Invalid effective dates: 0
-
-**Historical FTE Verification**
-
-- Verified historical FTE changes for 5 employees.
-- Confirmed multiple FTE values across salary history records.
-- Verified salary history for 2024, 2025 and 2026.
-
-**Currency Audit**
-
-- Audited INR and GBP salary records.
-- Verified compensation band currency distribution.
-- Verified employee location and currency mapping.
-- Identified the need for documented FX conversion and historical currency transfer scenarios.
-
-**Employee Location History**
-
-- Implemented EmployeeLocationHistory model.
-- Registered the model in the backend model package.
-- Created the employee location history table in the isolated salary migration test database.
-- Inserted initial location history records for 5,000 employees.
-- Verified foreign key integrity.
-
-**Location History Validation Results**
-
-- Initial location history records inserted: 5,000
-- Total location history records: 5,000
-- Foreign key errors: 0
-
-**Proposal Lifecycle and Approval Workflow**
-
-- Implemented proposal submission workflow.
-- Implemented approval and rejection workflows.
-- Implemented salary adjustment application.
-- Added rejection reviewer and rejection timestamp tracking.
-- Added proposal history and audit logging for lifecycle transitions.
-- Verified that duplicate salary adjustment application is prevented.
-- Tested FTE-aware salary adjustment application.
-
-**Status:** Salary history migration, historical FTE verification, location history creation, and proposal lifecycle testing completed successfully in isolated test databases.
-
----
-
-## Next Steps
-
-- Implement documented historical currency transfer and FX conversion scenarios.
-- Complete synthetic dataset validation and ground-truth checks.
-- Strengthen compensation analysis and disparity reporting.
-- Complete comparable group and exception analysis.
-- Expand proposal evidence and approval workflow.
-- Implement remaining validation and reporting requirements.
-- Develop React frontend dashboard and user workflows.
-- Integrate frontend with Flask backend APIs.
-- Prepare comprehensive test evidence and project documentation.
-
----
-
-## Entity Relationship Diagram
-
-![CompVista ER Diagram](ER_Diagram.png)
-
-## Project Structure
-
-```text
-CompVista/
-│
-├── backend/
-│   ├── app.py
-│   ├── extensions.py
-│   ├── models/
-│   │   ├── employee.py
-│   │   ├── role.py
-│   │   ├── level.py
-│   │   ├── location.py
-│   │   ├── compensation_band.py
-│   │   ├── salary_record.py
-│   │   ├── performance_evidence.py
-│   │   ├── tenure.py
-│   │   ├── promotion.py
-│   │   ├── adjustment_proposal.py
-│   │   ├── audit_log.py
-│   │   ├── proposal_history.py
-│   │   └── employee_location_history.py
-│   │
-│   ├── routes/
-│   └── services/
-│
-├── data/
-├── docs/
-├── frontend/
-├── reports/
-│
-├── src/
-│   ├── generate.py
-│   ├── role_data.py
-│   ├── band_data.py
-│   ├── migrate_bands.py
-│   ├── verify_bands.py
-│   ├── verify_data.py
-│   ├── test_analysis.py
-│   ├── test_proposals.py
-│   ├── test_approval.py
-│   ├── test_apply.py
-│   ├── migrate_salary_history.py
-│   ├── verify_salary_migration.py
-│   ├── audit_salary_history.py
-│   ├── audit_currency_history.py
-│   └── create_location_history_table.py
-│
-├── tests/
-├── ER_Diagram.png
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
+Frontend development, complete frontend-backend integration, and remaining end-to-end testing are pending.
 
 ## Installation and Setup
 
@@ -266,13 +114,11 @@ cd CompVista
 
 ### 2. Create Virtual Environment
 
-```bash
+```powershell
 python -m venv venv
 ```
 
 ### 3. Activate Virtual Environment
-
-Windows PowerShell:
 
 ```powershell
 .\venv\Scripts\Activate.ps1
@@ -280,60 +126,147 @@ Windows PowerShell:
 
 ### 4. Install Dependencies
 
-```bash
-pip install -r requirements.txt
+```powershell
+python -m pip install -r requirements.txt
 ```
 
-### 5. Run Flask Backend
+### 5. Configure Environment Variables
 
-```bash
+Set a secure JWT secret in PowerShell:
+
+```powershell
+$env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+For the existing populated local database:
+
+```powershell
+$env:COMPVISTA_DB_PATH = "backend/compvista_backup.db"
+```
+
+Keep secret values in environment variables or a local `.env` file. Never commit secrets or database files.
+
+### 6. Run Flask Backend
+
+```powershell
 python backend/app.py
 ```
 
-The backend runs locally using Flask and SQLite.
+Backend URL:
+
+`http://127.0.0.1:5000`
+
+Health check:
+
+`http://127.0.0.1:5000/health`
+
+## Staff Account Provisioning
+
+HR and Admin accounts are created using the local staff provisioning script.
+
+```powershell
+python backend/create_staff_user.py
+```
+
+The script supports HR and ADMIN roles and requests passwords securely through the terminal.
+
+Do not expose staff credentials or JWT tokens in source code or GitHub.
+
+## Testing
+
+Run the backend regression tests:
+
+```powershell
+python -m pytest tests -q
+```
+
+Latest recorded result:
+
+- 26 tests passed.
+- No failures in the `tests/` suite.
+
+The standalone workflow scripts under `src/` are separate from the pytest suite and require separate execution and review.
 
 ## Data Generation and Validation
 
 Run the synthetic data generator:
 
-```bash
+```powershell
 python src/generate.py
 ```
 
-Run compensation band master data generation:
+Run compensation band generation:
 
-```bash
+```powershell
 python src/role_data.py
 python src/band_data.py
 ```
 
 Run band validation:
 
-```bash
+```powershell
 python src/verify_bands.py
 ```
 
 Run general dataset validation:
 
-```bash
+```powershell
 python src/verify_data.py
 ```
 
-**Note:** Salary history and location history migration scripts currently target isolated test databases. Do not run migration scripts against the original database without creating and verifying a backup first. The salary migration test database contains 13,351 salary records for 2024–2026.
+**Database Safety:** Migration scripts may target isolated test databases. Do not run migration scripts against an existing populated database without a verified backup and explicit review.
 
-## Reproducibility
+## Disclaimer
 
-- Synthetic data generation uses a fixed seed: `20261022`.
-- A consistent seed supports repeatable data generation.
-- Data validation scripts check important master data and compensation band constraints.
-- Migration scripts use separate test databases and backups to protect existing data.
+This project uses synthetic employee data for demonstration and analysis purposes. It does not contain real employee compensation information.
 
 ## Future Enhancements
 
-- Interactive React dashboard.
+- Complete React frontend dashboard.
+- Candidate, HR and Admin role-based user interfaces.
+- Frontend-backend API integration.
+- Secure candidate-to-employee account linking.
+- Comprehensive end-to-end testing.
 - Advanced compensation benchmarking reports.
 - Additional explainable disparity detection.
-- Evidence-linked proposal reviews.
-- Role-based access control for HR, managers and administrators.
-- Comprehensive test coverage and exception reporting.
-- Historical employee
+- Final deployment and documentation.
+
+## Entity Relationship Diagram
+
+![CompVista ER Diagram](ER_Diagram.png)
+
+## Project Structure
+
+```text
+CompVista/
+├── backend/
+│   ├── app.py
+│   ├── extensions.py
+│   ├── create_staff_user.py
+│   ├── create_users_table.py
+│   ├── models/
+│   ├── routes/
+│   └── services/
+├── data/
+├── docs/
+├── frontend/
+├── reports/
+├── src/
+├── tests/
+├── ER_Diagram.png
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+## Git and Security
+
+The following files and directories must remain excluded from Git:
+
+- `venv/` and `.venv/`
+- `.env` and secret files
+- SQLite database files
+- Python cache files
+- `node_modules/` and build output
+
+Only source code, safe configuration examples, documentation and required project assets should be committed.
