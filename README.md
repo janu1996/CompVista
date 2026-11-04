@@ -487,6 +487,42 @@ npm run
 
 Close the other development-server process using that port, then restart the corresponding server. Do not terminate unrelated processes.
 
+ ## Main Steps to Run the Project
+
+Follow these steps to run CompVista locally.
+
+### Step 1: Create a Staff User
+
+Open the backend terminal and run:
+
+```bash
+python create_staff_user.py
+```
+
+### Step 2: Start the Backend Server
+
+Navigate to the backend folder and run:
+
+```bash
+python app.py
+```
+
+The backend server will start at `http://127.0.0.1:5000`.
+
+### Step 3: Start the Frontend Application
+
+Open a new terminal, navigate to the frontend folder, and run:
+
+```bash
+npm run dev
+```
+
+Open the local URL displayed in the terminal (usually `http://localhost:5173`) in your browser.
+
+### Step 4: Login to CompVista
+
+Use the staff account credentials created in Step 1 to log in and access the application.
+
 ## Data, security, and operational notes
 
 - The application is intended for synthetic demonstration data. Do not upload real employee salary or personal data to a public repository.
